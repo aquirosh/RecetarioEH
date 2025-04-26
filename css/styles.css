@@ -1,0 +1,134 @@
+/* VARIABLES & FONTS */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap');
+
+/*ESTILOS GENERALES*/
+:root {
+  --background: #e9e3e6;
+  --primary: #2c6e91;
+  --secondary: #64b5f6;
+  --accent: #ff5252;
+  --text: #2d3436;
+  --light-text: #636e72;
+  --dark-accent: #1e4e66;
+  --light-accent: #e3f2fd;
+  --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 32px;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--background);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Crimson Pro', serif;
+  color: var(--primary);
+}
+
+.logo {
+    font-family: 'Crimson Pro', serif;
+    
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: auto;
+    text-align: center;
+    width: 20%;
+    padding: 50px;
+    align-items: center;
+    display: flex;
+    justify-content: center; 
+    
+}
+
+.logo a {
+
+    text-decoration: none;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 28px;
+    font-weight: bold;
+    transition: color 0.3s;
+    
+
+  }
+  
+  /*NAV*/
+nav {
+    background-color: var(--primary);
+    color: var(--light-accent);
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--card-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    transition: background-color 0.3s;
+    
+  }
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: var(--spacing-md);
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 100px;
+  }
+
+nav ul li {
+    margin: 0;
+    padding: 0;
+  }
+
+nav ul li a {
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    transition: color 0.3s;
+    padding: 10px 20px;
+  }
+
+nav ul li a:hover {
+    color: var(--accent);
+  }
+
+  .menu-button {
+    font-size: 1.5rem; 
+    background-color: var(--primary);
+    color: var(--light-accent);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.menu-button:hover {
+    background-color: var(--secondary);
+    transform: scale(1.1);
+}
+
+.menu-button:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .menu-button {
+        display: block;
+    }
+}
