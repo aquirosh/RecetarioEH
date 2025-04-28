@@ -4,36 +4,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
+    <title>Recetario Eugenie Herrero - Cocina Casera</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
-
     <nav>
         <button class="menu-button">☰</button>
         <ul>
-          <li><a href="#" class="active">Home</a></li>
-          <li><a href="#">Recetas</a></li>
-          <li><a href="#">Categorias</a></li>
-          
+          <li><a href="index.html" class="active">Home</a></li>
+          <li><a href="recetas.html">Recetas</a></li>
+          <li><a href="categorias.html">Categorias</a></li>
         </ul>
-      </nav>
-      <div class="logo">
-        <a href = 'index.html'>Recetario QH</a>
-    </div>
+    </nav>
+    
     <header>
-        
-        
+        <div class="container">
+            <div class="header-content">
+                <h1>Recetario E.H.</h1>
+                <h3> Las mejores recetas de Eugenie Herrero</h3>
+            </div>
+        </div>
     </header>
 
     <main>
+        <section class="recent-recipes">
+            <div class="container">
+                <h2 class="section-title">Recetas Recientes</h2>
+                
+                <div class="recipes-container">
+                    <!-- Receta 1 -->
+                    <div class="recipe-card">
+                        <div class="recipe-image">
+                            <img src="imagenes/pasta-carbonara.jpg" alt="Pasta Carbonara">
+                            <div class="recipe-time">30 min</div>
+                        </div>
+                        <div class="recipe-content">
+                            <h3>Pasta Carbonara</h3>
+                            <div class="recipe-meta">
+                                <span class="difficulty">Fácil</span>
+                                <span class="servings"><i class="icon-plate"></i> 4 personas</span>
+                            </div>
+                            <p class="recipe-desc">Deliciosa pasta con salsa cremosa de huevo, queso y tocino crujiente.</p>
+                            <div class="recipe-tags">
+                                <span class="tag">Italiano</span>
+                                <span class="tag">Pasta</span>
+                            </div>
+                            <a href="#" class="recipe-link">Ver receta</a>
+                        </div>
+                    </div>
+
+                    <!-- Receta 2 -->
+                    <div class="recipe-card">
+                        <div class="recipe-image">
+                            <img src="imagenes/ensalada-mediterranea.jpg" alt="Ensalada Mediterránea">
+                            <div class="recipe-time">15 min</div>
+                        </div>
+                        <div class="recipe-content">
+                            <h3>Ensalada Mediterránea</h3>
+                            <div class="recipe-meta">
+                                <span class="difficulty">Fácil</span>
+                                <span class="servings"><i class="icon-plate"></i> 2 personas</span>
+                            </div>
+                            <p class="recipe-desc">Fresca ensalada con tomates cherry, pepino, aceitunas, queso feta y vinagreta.</p>
+                            <div class="recipe-tags">
+                                <span class="tag">Saludable</span>
+                                <span class="tag">Veggie</span>
+                            </div>
+                            <a href="#" class="recipe-link">Ver receta</a>
+                        </div>
+                    </div>
+
+                    <!-- Receta 3 -->
+                    <div class="recipe-card">
+                        <div class="recipe-image">
+                            <img src="imagenes/lasagna.jpg" alt="Lasaña Tradicional">
+                            <div class="recipe-time">45 min</div>
+                        </div>
+                        <div class="recipe-content">
+                            <h3>Lasaña Tradicional</h3>
+                            <div class="recipe-meta">
+                                <span class="difficulty">Media</span>
+                                <span class="servings"><i class="icon-plate"></i> 4 personas</span>
+                            </div>
+                            <p class="recipe-desc">Clásica lasaña con capas de pasta, carne sazonada y salsa cremosa de tomate.</p>
+                            <div class="recipe-tags">
+                                <span class="tag">Pasta</span>
+                                <span class="tag">Horno</span>
+                            </div>
+                            <a href="#" class="recipe-link">Ver receta</a>
+                        </div>                        
+                    </div>
+                                        
+                </div>
+                
+                <div class="view-more">
+                    <a href="#" class="btn">Ver más recetas</a>
+                </div>
+            </div>
+        </section>
         
-        
+        <section class="categories">
+            <div class="container">
+                <h2 class="section-title">Categorías Populares</h2>
+                
+                <div class="categories-container">
+                    <a href="#" class="category-card">
+                        <div class="category-image">
+                            <img src="images/desayunos.jpg" alt="Desayunos">
+                        </div>
+                        <h3>Desayunos</h3>
+                    </a>
+                    
+                    <a href="#" class="category-card">
+                        <div class="category-image">
+                            <img src="images/comidas.jpg" alt="Comidas">
+                        </div>
+                        <h3>Comidas</h3>
+                    </a>
+                    
+                    <a href="#" class="category-card">
+                        <div class="category-image">
+                            <img src="images/postres.jpg" alt="Postres">
+                        </div>
+                        <h3>Postres</h3>
+                    </a>
+                    
+                    <a href="#" class="category-card">
+                        <div class="category-image">
+                            <img src="images/bebidas.jpg" alt="Bebidas">
+                        </div>
+                        <h3>Bebidas</h3>
+                    </a>
+                </div>
+            </div>
+        </section>
     </main>
 
-    
     <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <a href="index.html">Recetario QH</a>
+                    <p>Cocina casera para todos los días</p>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>Navegación</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="recetas.html">Recetas</a></li>
+                        <li><a href="categorias.html">Categorias</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2025 Recetario QH - Todos los derechos reservados</p>
+            </div>
+        </div>
     </footer>
 
 </body>
