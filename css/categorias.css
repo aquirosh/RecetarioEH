@@ -1,0 +1,225 @@
+/* Estilos para el navbar fijo */
+nav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+    height: 60px !important;
+    box-sizing: border-box !important;
+}
+
+body {
+    padding-top: 60px !important;
+}
+
+/* Estilos para categorías */
+.categorias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.categoria-card {
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.categoria-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.categoria-header {
+    padding: 2rem;
+    color: white;
+    text-align: center;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.categoria-header h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    color: white !important;
+}
+
+.categoria-count {
+    background-color: rgba(255,255,255,0.3);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.categoria-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.btn-ver-recetas {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    background-color: #f8f9fa;
+    color: #333;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.btn-ver-recetas:hover {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.categoria-acciones {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+.btn-accion {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-accion:hover {
+    background-color: rgba(255,255,255,0.4);
+}
+
+.btn-accion svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Formulario para agregar categoría */
+.nueva-categoria-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.nueva-categoria-container h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+}
+
+.nueva-categoria-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.nueva-categoria-form .form-group {
+    margin-bottom: 0;
+}
+
+.nueva-categoria-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.nueva-categoria-form input, 
+.nueva-categoria-form textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.nueva-categoria-form button {
+    padding: 0.6rem 1.5rem;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.nueva-categoria-form button:hover {
+    background-color: var(--dark-accent);
+}
+
+.color-preview {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#colorOptions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 0.5rem;
+}
+
+.color-option {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.color-option:hover, 
+.color-option.selected {
+    border-color: #333;
+    transform: scale(1.1);
+}
+
+/* Mensaje vacío */
+.categorias-vacio {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.categorias-vacio p {
+    margin-bottom: 1rem;
+    color: var(--light-text);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nueva-categoria-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .nueva-categoria-form button {
+        margin-top: 1rem;
+    }
+}

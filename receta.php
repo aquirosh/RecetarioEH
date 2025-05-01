@@ -2,108 +2,92 @@
 require_once 'backend/db.php'; // Ruta unificada para la conexión
 session_start(); // Añadimos soporte para sesiones
 
-// Función para validar datos
-function validarDatos($datos) {
-    $errores = [];
-    
-    // Validación de campos requeridos
-    $camposRequeridos = ['title', 'category', 'prep_time', 'cook_time', 'ingredients', 'preparation_steps'];
-    foreach ($camposRequeridos as $campo) {
-        if (empty(trim($datos[$campo]))) {
-            $errores[] = "El campo " . ucfirst(str_replace('_', ' ', $campo)) . " es obligatorio.";
-        }
-    }
-    
-    // Validación de campos numéricos
-    if (!empty($datos['prep_time']) && (!is_numeric($datos['prep_time']) || $datos['prep_time'] < 0)) {
-        $errores[] = "El tiempo de preparación debe ser un número positivo.";
-    }
-    
-    if (!empty($datos['cook_time']) && (!is_numeric($datos['cook_time']) || $datos['cook_time'] < 0)) {
-        $errores[] = "El tiempo de cocción debe ser un número positivo.";
-    }
-    
-    // Validación de URL de imagen (si se proporciona)
-    if (!empty($datos['image_url']) && !filter_var($datos['image_url'], FILTER_VALIDATE_URL)) {
-        $errores[] = "La URL de la imagen no es válida.";
-    }
-    
-    return $errores;
-}
-
 // Inicializar variables
-$errores = [];
-$exito = false;
-$recetaId = null;
-$datosFormulario = [
-    'title' => '',
-    'category' => '',
-    'portions' => '',
-    'prep_time' => '',
-    'cook_time' => '',
-    'ingredients' => '',
-    'preparation_steps' => '',
-    'image_url' => ''
-];
+$receta = null;
+$error = null;
+$mensaje = null;
+$tipo_mensaje = null;
 
-// Si se envió el formulario
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Recibir y sanitizar datos
-    foreach ($datosFormulario as $campo => $valor) {
-        $datosFormulario[$campo] = isset($_POST[$campo]) ? trim(htmlspecialchars($_POST[$campo])) : '';
-    }
-    
-    // Validar datos
-    $errores = validarDatos($datosFormulario);
-    
-    // Si no hay errores, guardar en la base de datos
-    if (empty($errores)) {
-        $sql = "INSERT INTO recipes (title, category, portions, prep_time_minutes, cook_time_minutes, ingredients, preparation_steps, image_url, created_at)
-                VALUES (:title, :category, :portions, :prep_time, :cook_time, :ingredients, :preparation_steps, :image_url, NOW())";
-        
-        $stmt = $pdo->prepare($sql);
-        
-        try {
-            $stmt->execute([
-                ':title' => $datosFormulario['title'],
-                ':category' => $datosFormulario['category'],
-                ':portions' => $datosFormulario['portions'],
-                ':prep_time' => (int) $datosFormulario['prep_time'],
-                ':cook_time' => (int) $datosFormulario['cook_time'],
-                ':ingredients' => $datosFormulario['ingredients'],
-                ':preparation_steps' => $datosFormulario['preparation_steps'],
-                ':image_url' => $datosFormulario['image_url']
-            ]);
-            
-            $recetaId = $pdo->lastInsertId();
-            $exito = true;
-            
-            // Limpiar formulario después de éxito
-            foreach ($datosFormulario as $campo => $valor) {
-                $datosFormulario[$campo] = '';
-            }
-            
-            // Almacenar mensaje en sesión y redirigir
-            $_SESSION['mensaje'] = "¡Receta agregada exitosamente!";
-            $_SESSION['tipo_mensaje'] = "success";
-            header("Location: receta.php?id=$recetaId");
-            exit;
-            
-        } catch (PDOException $e) {
-            $errores[] = "Error al agregar receta: " . $e->getMessage();
-        }
-    }
+// Comprobar si hay un mensaje en la sesión
+if (isset($_SESSION['mensaje']) && isset($_SESSION['tipo_mensaje'])) {
+    $mensaje = $_SESSION['mensaje'];
+    $tipo_mensaje = $_SESSION['tipo_mensaje'];
+    // Limpiar mensajes de la sesión
+    unset($_SESSION['mensaje']);
+    unset($_SESSION['tipo_mensaje']);
 }
 
-// Cargar categorías desde la base de datos
-$categorias = [];
-try {
-    $stmt = $pdo->query("SELECT DISTINCT category FROM recipes ORDER BY category");
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $categorias[] = $row['category'];
+// Verificar si se ha proporcionado un ID válido
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $recetaId = (int)$_GET['id'];
+    
+    try {
+        // Consultar la receta por ID
+        $stmt = $pdo->prepare("SELECT * FROM recetas WHERE id = :id");
+        $stmt->execute([':id' => $recetaId]);
+        $receta = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$receta) {
+            $error = "No se encontró la receta con ID: $recetaId";
+        }
+    } catch (PDOException $e) {
+        $error = "Error al consultar la base de datos: " . $e->getMessage();
     }
-} catch (PDOException $e) {
-    // Manejar error silenciosamente
+} else {
+    $error = "ID de receta no válido o no proporcionado.";
+}
+
+// Función para formatear los ingredientes
+function formatearIngredientes($ingredientes) {
+    $lineas = explode("\n", $ingredientes);
+    $html = '<ul class="ingredientes-lista">';
+    
+    foreach ($lineas as $linea) {
+        $linea = trim($linea);
+        if (!empty($linea)) {
+            $html .= '<li>' . htmlspecialchars($linea) . '</li>';
+        }
+    }
+    
+    $html .= '</ul>';
+    return $html;
+}
+
+// Función para formatear los pasos de preparación
+function formatearPasos($pasos) {
+    $lineas = explode("\n", $pasos);
+    $html = '<ol class="pasos-lista">';
+    
+    foreach ($lineas as $linea) {
+        $linea = trim($linea);
+        if (!empty($linea)) {
+            $html .= '<li>' . htmlspecialchars($linea) . '</li>';
+        }
+    }
+    
+    $html .= '</ol>';
+    return $html;
+}
+
+// Función para calcular el tiempo total
+function calcularTiempoTotal($preparacion, $coccion) {
+    return $preparacion + $coccion;
+}
+
+// Función para formatear minutos en formato legible
+function formatearTiempo($minutos) {
+    if ($minutos < 60) {
+        return $minutos . ' min';
+    }
+    
+    $horas = floor($minutos / 60);
+    $min = $minutos % 60;
+    
+    if ($min == 0) {
+        return $horas . ' h';
+    }
+    
+    return $horas . ' h ' . $min . ' min';
 }
 ?>
 
@@ -112,154 +96,167 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar Receta | Recetario QH</title>
-    <link rel="stylesheet" href="../css/styles.css">
-    <!-- Importa las fuentes de Google -->
+    <title><?php echo $receta ? htmlspecialchars($receta['title']) : 'Receta no encontrada'; ?> | Recetario QH</title>
+    <link rel="stylesheet" href="css/receta.css">
+    <link rel="stylesheet" href="css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav>
         <button class="menu-button">☰</button>
         <ul>
-            <li><a href="../index.html">Home</a></li>
-            <li><a href="../recetas.php" class="active">Recetas</a></li>
-            <li><a href="../categorias.php">Categorías</a></li>
+            <li><a href="index.php">Home</a></li>
+            <li><a href="recetas.php" class="active">Recetas</a></li>
+            <li><a href="categorias.php">Categorías</a></li>
         </ul>
     </nav>
     
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <h1>Agregar Nueva Receta</h1>
-                <p>Comparte tus mejores platos con la comunidad</p>
-            </div>
+    <?php if ($mensaje): ?>
+    <div class="mensaje-container">
+        <div class="message <?php echo $tipo_mensaje; ?>-message">
+            <?php echo $mensaje; ?>
         </div>
-    </header>
+    </div>
+    <?php endif; ?>
 
     <main>
         <div class="container">
-            <div class="form-container">
-                <div class="form-decoration"></div>
-                <div class="form-header">
-                    <h2>Añadir receta al recetario</h2>
-                    <p>Completa todos los campos marcados con asterisco (*)</p>
+            <?php if ($error): ?>
+                <div class="error-container">
+                    <h2>Error</h2>
+                    <p><?php echo $error; ?></p>
+                    <a href="recetas.php" class="btn btn-primary">Volver a Recetas</a>
                 </div>
-                
-                <?php if (!empty($errores)): ?>
-                    <div class="message error-message">
-                        <ul>
-                            <?php foreach ($errores as $error): ?>
-                                <li><?php echo $error; ?></li>
-                            <?php endforeach; ?>
-                        </ul>
+            <?php elseif ($receta): ?>
+                <div class="receta-detalle">
+                    <div class="receta-header">
+                        <div class="receta-titulo">
+                            <h1><?php echo htmlspecialchars($receta['title']); ?></h1>
+                            <span class="categoria-badge"><?php echo htmlspecialchars($receta['category']); ?></span>
+                        </div>
+                        <div class="receta-acciones">
+                            <a href="backend/editar_receta.php?id=<?php echo $receta['id']; ?>" class="btn btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                </svg>
+                                Editar
+                            </a>
+                            <button class="btn btn-danger" onclick="confirmarEliminar(<?php echo $receta['id']; ?>)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                                Eliminar
+                            </button>
+                        </div>
                     </div>
-                <?php endif; ?>
-                
-                <?php if ($exito): ?>
-                    <div class="message success-message">
-                        ¡Receta agregada exitosamente! <a href="receta.php?id=<?php echo $recetaId; ?>">Ver receta</a>
-                    </div>
-                <?php endif; ?>
-                
-                <form method="POST" action="backend/agregar_receta.php">
-                    <div class="form-group">
-                        <label for="title" class="required-field">Título de la Receta</label>
-                        <input type="text" id="title" name="title" class="form-control" value="<?php echo $datosFormulario['title']; ?>" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="category" class="required-field">Categoría</label>
-                        <select id="category" name="category" class="form-control" required>
-                            <option value="">Selecciona una categoría</option>
-                            <?php if (!empty($categorias)): ?>
-                                <?php foreach ($categorias as $categoria): ?>
-                                    <option value="<?php echo htmlspecialchars($categoria); ?>" <?php echo ($datosFormulario['category'] === $categoria) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($categoria); ?>
-                                    </option>
-                                <?php endforeach; ?>
+
+                    <div class="receta-layout">
+                        <div class="receta-info-superior">
+                            <!-- Imagen de la receta -->
+                            <?php if (!empty($receta['image_path'])): ?>
+                                <div class="receta-imagen">
+                                    <img src="<?php echo htmlspecialchars($receta['image_path']); ?>" alt="<?php echo htmlspecialchars($receta['title']); ?>">
+                                </div>
+                            <?php elseif (!empty($receta['image_url'])): ?>
+                                <div class="receta-imagen">
+                                    <img src="<?php echo htmlspecialchars($receta['image_url']); ?>" alt="<?php echo htmlspecialchars($receta['title']); ?>">
+                                </div>
+                            <?php else: ?>
+                                <div class="receta-imagen receta-imagen-placeholder">
+                                    <div class="placeholder-content">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M18 6V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2"></path>
+                                            <path d="M18 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"></path>
+                                            <rect x="10" y="10" width="4" height="4"></rect>
+                                        </svg>
+                                        <p>Sin imagen</p>
+                                    </div>
+                                </div>
                             <?php endif; ?>
-                            <option value="nueva">+ Añadir nueva categoría</option>
-                        </select>
-                        <div id="nuevaCategoriaContainer" class="nueva-categoria-container" style="display: none;">
-                            <input type="text" id="nuevaCategoria" class="form-control" placeholder="Nombre de nueva categoría">
-                            <button type="button" id="btnAgregarCategoria" class="btn-agregar-categoria">Agregar</button>
+
+                            <!-- Información rápida sobre la receta -->
+                            <div class="receta-info-general">
+                                <div class="receta-info-rapida">
+                                    <div class="info-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                        <div>
+                                            <span class="info-label">Prep.</span>
+                                            <span class="info-valor"><?php echo formatearTiempo($receta['prep_time_minutes']); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                        <div>
+                                            <span class="info-label">Cocción</span>
+                                            <span class="info-valor"><?php echo formatearTiempo($receta['cook_time_minutes']); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        <div>
+                                            <span class="info-label">Total</span>
+                                            <span class="info-valor"><?php echo formatearTiempo(calcularTiempoTotal($receta['prep_time_minutes'], $receta['cook_time_minutes'])); ?></span>
+                                        </div>
+                                    </div>
+                                    <?php if (!empty($receta['portions'])): ?>
+                                    <div class="info-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="info-label">Porciones</span>
+                                            <span class="info-valor"><?php echo htmlspecialchars($receta['portions']); ?></span>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Sección de ingredientes -->
+                                <div class="receta-seccion">
+                                    <h2>Ingredientes</h2>
+                                    <?php echo formatearIngredientes($receta['ingredients']); ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección de preparación con mayor espacio -->
+                        <div class="receta-contenido">
+                            <div class="receta-seccion preparacion-seccion">
+                                <h2>Preparación</h2>
+                                <?php echo formatearPasos($receta['preparation_steps']); ?>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="portions">Porciones</label>
-                        <input type="text" id="portions" name="portions" class="form-control" value="<?php echo $datosFormulario['portions']; ?>" placeholder="Ej: 4 personas">
-                        <p class="help-text">Indica para cuántas personas está pensada esta receta</p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="prep_time" class="required-field">Tiempo de preparación (minutos)</label>
-                        <input type="number" id="prep_time" name="prep_time" class="form-control" value="<?php echo $datosFormulario['prep_time']; ?>" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="cook_time" class="required-field">Tiempo de cocción (minutos)</label>
-                        <input type="number" id="cook_time" name="cook_time" class="form-control" value="<?php echo $datosFormulario['cook_time']; ?>" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="ingredients" class="required-field">Ingredientes</label>
-                        <div class="ingredientes-tips">
-                            <h4>
-                                <svg class="tip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                                Consejos para ingresar ingredientes
-                            </h4>
-                            <p>Escribe cada ingrediente en una línea separada con el formato: <br>
-                               "Cantidad - Ingrediente" (ejemplo: "2 tazas - Harina")</p>
-                        </div>
-                        <textarea id="ingredients" name="ingredients" class="form-control" required><?php echo $datosFormulario['ingredients']; ?></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="preparation_steps" class="required-field">Pasos de Preparación</label>
-                        <div class="preparacion-tips">
-                            <h4>
-                                <svg class="tip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                                Consejos para los pasos
-                            </h4>
-                            <p>Escribe cada paso en una línea separada. No es necesario numerarlos, ¡lo haremos por ti automáticamente!</p>
-                        </div>
-                        <textarea id="preparation_steps" name="preparation_steps" class="form-control" required><?php echo $datosFormulario['preparation_steps']; ?></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="image_url">URL de la Imagen</label>
-                        <input type="text" id="image_url" name="image_url" class="form-control" value="<?php echo $datosFormulario['image_url']; ?>" placeholder="https://ejemplo.com/imagen.jpg">
-                        <p class="help-text">Ingresa la URL de una imagen que represente tu receta. Deja en blanco si no tienes una imagen.</p>
-                    </div>
-                    
-                    <div class="buttons-container">
-                        <a href="../recetas.php" class="btn btn-secondary">
+
+                    <div class="receta-footer">
+                        <a href="recetas.php" class="btn btn-secondary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="19" y1="12" x2="5" y2="12"></line>
                                 <polyline points="12 19 5 12 12 5"></polyline>
                             </svg>
-                            Cancelar
+                            Volver a Recetas
                         </a>
-                        <button type="submit" class="btn btn-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                <polyline points="7 3 7 8 15 8"></polyline>
-                            </svg>
-                            Guardar Receta
-                        </button>
                     </div>
-                </form>
-            </div>
+                </div>
+            <?php endif; ?>
         </div>
     </main>
 
@@ -267,66 +264,41 @@ try {
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <a href="../index.html">Recetario QH</a>
+                    <a href="index.php">Recetario</a>
                     <p>Cocina casera para todos los días</p>
                 </div>
                 
                 <div class="footer-links">
                     <h3>Navegación</h3>
                     <ul>
-                        <li><a href="../index.html">Home</a></li>
-                        <li><a href="../recetas.php">Recetas</a></li>
-                        <li><a href="../categorias.php">Categorías</a></li>
+                        <li><a href="index.php">Inicio</a></li>
+                        <li><a href="recetas.php">Recetas</a></li>
+                        <li><a href="categorias.php">Categorias</a></li>
                     </ul>
                 </div>
-            </div>
-            
-            <div class="copyright">
-                <p>&copy; 2025 Recetario QH - Todos los derechos reservados</p>
             </div>
         </div>
     </footer>
 
     <script>
-        // Manejo de categorías dinámicas
+        // Función para confirmar eliminación
+        function confirmarEliminar(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta receta? Esta acción no se puede deshacer.')) {
+                window.location.href = 'backend/eliminar_receta.php?id=' + id;
+            }
+        }
+
+        // Manejo del menú responsivo
         document.addEventListener('DOMContentLoaded', function() {
-            const categoriaSelect = document.getElementById('category');
-            const nuevaCategoriaContainer = document.getElementById('nuevaCategoriaContainer');
-            const nuevaCategoriaInput = document.getElementById('nuevaCategoria');
-            const btnAgregarCategoria = document.getElementById('btnAgregarCategoria');
+            const menuButton = document.querySelector('.menu-button');
+            const navUl = document.querySelector('nav ul');
             
-            categoriaSelect.addEventListener('change', function() {
-                if (this.value === 'nueva') {
-                    nuevaCategoriaContainer.style.display = 'flex';
-                    nuevaCategoriaInput.focus();
-                } else {
-                    nuevaCategoriaContainer.style.display = 'none';
-                }
-            });
-            
-            btnAgregarCategoria.addEventListener('click', function() {
-                const nuevaCategoria = nuevaCategoriaInput.value.trim();
-                
-                if (nuevaCategoria !== '') {
-                    // Crear nueva opción
-                    const nuevaOpcion = document.createElement('option');
-                    nuevaOpcion.value = nuevaCategoria;
-                    nuevaOpcion.textContent = nuevaCategoria;
-                    
-                    // Insertar antes de "Añadir nueva categoría"
-                    categoriaSelect.insertBefore(nuevaOpcion, categoriaSelect.lastElementChild);
-                    
-                    // Seleccionar la nueva opción
-                    nuevaOpcion.selected = true;
-                    
-                    // Ocultar el contenedor
-                    nuevaCategoriaContainer.style.display = 'none';
-                    nuevaCategoriaInput.value = '';
-                } else {
-                    alert('Por favor, ingresa un nombre para la nueva categoría');
-                }
+            menuButton.addEventListener('click', function() {
+                navUl.classList.toggle('show');
             });
         });
     </script>
+    <script src="js/menu.js"></script>
+    <script src="js/recipe-cards.js"></script>
 </body>
 </html>

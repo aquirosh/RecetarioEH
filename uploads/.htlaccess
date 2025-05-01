@@ -1,0 +1,20 @@
+# Permitir el acceso a este directorio
+Options +Indexes
+
+# Permitir lectura de archivos de imagen
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Denegar acceso a todos los otros tipos de archivos
+<FilesMatch "^(?!.*\.(jpg|jpeg|png|gif|webp)$)">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Opcional: Protección adicional contra scripts
+<Files ~ "\.php$">
+    Order allow,deny
+    Deny from all
+</Files>

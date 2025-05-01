@@ -1,0 +1,302 @@
+/* Estilos específicos para la página de receta */
+
+/* Navegación fija */
+nav {
+    position: fixed; /* Cambiado de sticky a fixed para que se quede fijo */
+    top: 0;
+    left: 0;
+    width: 100%; /* Asegura que ocupa todo el ancho */
+    z-index: 1000;
+}
+
+/* Ajuste para que el contenido no quede debajo del navbar */
+body {
+    padding-top: 84px; /* Ajusta este valor según la altura de tu navbar */
+}
+
+/* Contenedor principal de la receta */
+.receta-detalle {
+    padding: var(--spacing-lg) 0;
+}
+
+/* Encabezado de la receta */
+.receta-header {
+    margin-bottom: var(--spacing-lg);
+}
+
+.receta-titulo h1 {
+    font-size: 32px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.categoria-badge {
+    display: inline-block;
+    background-color: var(--light-accent);
+    color: var(--primary);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+}
+
+.receta-acciones {
+    display: flex;
+    gap: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+}
+
+/* Layout principal */
+.receta-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+}
+
+/* Sección superior con imagen e info básica */
+.receta-info-superior {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    align-items: flex-start;
+}
+
+/* Imagen de la receta */
+.receta-imagen {
+    width: 300px; /* Imagen más pequeña */
+    height: 300px;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    flex-shrink: 0;
+}
+
+.receta-imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.receta-imagen-placeholder {
+    background-color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.placeholder-content {
+    text-align: center;
+    color: var(--light-text);
+}
+
+.placeholder-content svg {
+    margin-bottom: var(--spacing-sm);
+    color: var(--light-text);
+}
+
+.placeholder-content p {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Información general de la receta */
+.receta-info-general {
+    flex-grow: 1;
+}
+
+/* Indicadores de tiempo y porciones */
+.receta-info-rapida {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background-color: var(--light-accent);
+    padding: 10px 15px;
+    border-radius: 8px;
+    min-width: 120px;
+}
+
+.info-item svg {
+    color: var(--primary);
+}
+
+.info-label {
+    font-size: 12px;
+    color: var(--light-text);
+    display: block;
+}
+
+.info-valor {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 14px;
+    display: block;
+}
+
+/* Secciones de Ingredientes y Preparación */
+.receta-seccion {
+    margin-bottom: var(--spacing-lg);
+}
+
+.receta-seccion h2 {
+    color: var(--primary);
+    font-size: 24px;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--light-accent);
+    font-family: 'Crimson Pro', serif;
+}
+
+/* Lista de ingredientes */
+.ingredientes-lista {
+    padding-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.ingredientes-lista li {
+    margin-bottom: var(--spacing-sm);
+    position: relative;
+    padding-left: var(--spacing-sm);
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Lista de pasos de preparación */
+.pasos-lista {
+    padding-left: var(--spacing-lg);
+    counter-reset: paso;
+}
+
+.pasos-lista li {
+    margin-bottom: var(--spacing-md);
+    position: relative;
+    padding-left: var(--spacing-sm);
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+/* Contenido principal */
+.receta-contenido {
+    width: 100%;
+}
+
+.preparacion-seccion {
+    background-color: #fff;
+    padding: var(--spacing-lg);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+}
+
+/* Footer de la receta */
+.receta-footer {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--light-accent);
+}
+
+/* Mensajes de error */
+.error-container {
+    background-color: #ffebee;
+    padding: var(--spacing-lg);
+    border-radius: 12px;
+    border-left: 4px solid var(--accent);
+    text-align: center;
+    margin: var(--spacing-lg) 0;
+}
+
+.error-container h2 {
+    color: #c62828;
+    margin-bottom: var(--spacing-md);
+}
+
+/* Para mostrar el menú móvil */
+@media (max-width: 768px) {
+    nav ul {
+        display: none;
+    }
+    
+    nav ul.show {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: var(--primary);
+        padding: var(--spacing-md) 0;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    nav ul.show li {
+        width: 100%;
+        text-align: center;
+    }
+    
+    nav ul.show li a {
+        display: block;
+        padding: var(--spacing-md);
+    }
+    
+    body {
+        padding-top: 68px; /* Reducir para móviles */
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .receta-info-superior {
+        flex-direction: column;
+    }
+    
+    .receta-imagen {
+        width: 100%;
+        height: 250px;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .info-item {
+        min-width: 0;
+        flex: 1;
+    }
+    
+    .receta-acciones {
+        flex-direction: column;
+    }
+    
+    .receta-acciones .btn {
+        width: 100%;
+    }
+}
+
+.menu-button {
+    font-size: 1.5rem; 
+    background-color: var(--primary);
+    color: var(--light-accent);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.menu-button:hover {
+    background-color: var(--secondary);
+    transform: scale(1.1);
+}
+
+.menu-button:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .menu-button {
+        display: block;
+    }
+}
