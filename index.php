@@ -6,14 +6,12 @@ function formatearTiempo($minutos) {
     if ($minutos < 60) {
         return $minutos . ' min';
     }
-    
     $horas = floor($minutos / 60);
     $min = $minutos % 60;
     
     if ($min == 0) {
         return $horas . ' h';
     }
-    
     return $horas . ' h ' . $min . ' min';
 }
 
@@ -172,11 +170,17 @@ try {
 </head>
 
 <body>
+    <!-- Navigation -->
 <nav>
+    <div class="menu-container">
+        <button class="menu-button" id="openMenu">☰</button>
+    </div>
     <div class="brand-container">
         <a href="index.php" class="nav-brand">Recetario</a>
     </div>
-    <button class="menu-button" id="openMenu">☰</button>
+    <div class="placeholder-container">
+        <!-- Empty container to balance the grid layout -->
+    </div>
 </nav>
 
 <!-- Side Menu -->
@@ -191,6 +195,7 @@ try {
             <li><a href="index.php">Inicio</a></li>
             <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
             <li><a href="recetas.php">Recetas</a></li>
+            <li><a href="categorias.php">Agregar Categorias</a></li>
             <li><a href="categorias.php">Categorias</a></li>
         </ul>
     </div>

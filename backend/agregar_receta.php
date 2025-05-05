@@ -301,14 +301,35 @@ try {
 </head>
 
 <body>
-    <nav>
-        <button class="menu-button">☰</button>
+    <!-- Navigation -->
+<nav>
+    <div class="menu-container">
+        <button class="menu-button" id="openMenu">☰</button>
+    </div>
+    <div class="brand-container">
+        <a href="../index.php" class="nav-brand">Recetario</a>
+    </div>
+    <div class="placeholder-container">
+        <!-- Empty container to balance the grid layout -->
+    </div>
+</nav>
+
+<!-- Side Menu -->
+<div class="menu-overlay" id="menuOverlay"></div>
+<div class="side-menu" id="sideMenu">
+    <div class="side-menu-content">
+        <div class="menu-header">
+            <h3>Recetario</h3>
+            <button class="close-menu" id="closeMenu">×</button>
+        </div>
         <ul>
-            <li><a href="../index.php">Home</a></li>
-            <li><a href="../recetas.php" class="active">Recetas</a></li>
-            <li><a href="../categorias.php">Categorías</a></li>
+            <li><a href="../index.php">Inicio</a></li>
+            <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
+            <li><a href="../recetas.php">Recetas</a></li>
+            <li><a href="../categorias.php">Categorias</a></li>
         </ul>
-    </nav>
+    </div>
+</div>
 
     <header>
         <div class="container">
@@ -533,5 +554,7 @@ try {
             }
         });
     </script>
+    <script src="../js/menu.js"></script>
+    <script src="../js/recipe-cards.js"></script>
 </body>
 </html>

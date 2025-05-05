@@ -4,9 +4,11 @@ session_start(); // Soporte para mensajes de sesión
 
 // Inicializar variables
 $recetas = [];
+$categorias = [];
 $mensaje = null;
 $tipo_mensaje = null;
-$filtroCategoria = isset($_GET['categoria']) ? trim($_GET['categoria']) : '';
+$mostrarCategorias = true; // Por defecto, mostrar categorías
+$categoriaSeleccionada = null;
 
 // Comprobar si hay un mensaje en la sesión
 if (isset($_SESSION['mensaje']) && isset($_SESSION['tipo_mensaje'])) {
@@ -17,161 +19,144 @@ if (isset($_SESSION['mensaje']) && isset($_SESSION['tipo_mensaje'])) {
     unset($_SESSION['tipo_mensaje']);
 }
 
-// Construir consulta SQL con posibles filtros
-$sql = "SELECT r.*, c.color as categoria_color 
-        FROM recetas r
-        LEFT JOIN categorias c ON r.categoria_id = c.id";
-$params = [];
+// Verificar si se ha seleccionado una categoría
+if (isset($_GET['categoria']) && !empty($_GET['categoria'])) {
+    $categoriaSeleccionada = htmlspecialchars(trim($_GET['categoria']));
+    $mostrarCategorias = false; // Mostrar recetas en su lugar
 
-// Aplicar filtro por categoría si está presente
-if (!empty($filtroCategoria)) {
-    $sql .= " WHERE r.category = :categoria";
-    $params[':categoria'] = $filtroCategoria;
-}
+    // Obtener recetas de la categoría seleccionada
+    try {
+        $sql = "SELECT r.*, c.color as categoria_color 
+                FROM recetas r
+                LEFT JOIN categorias c ON r.categoria_id = c.id
+                WHERE c.nombre = :categoria
+                ORDER BY r.id DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':categoria' => $categoriaSeleccionada]);
+        $recetas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $mensaje = "Error al cargar las recetas: " . $e->getMessage();
+        $tipo_mensaje = "error";
+    }
+} elseif (isset($_GET['ver_todas']) && $_GET['ver_todas'] == 'true') {
+    $mostrarCategorias = false; // Mostrar todas las recetas
 
-$sql .= " ORDER BY r.id DESC"; // Ordenar por más recientes primero
-
-// Intentar obtener las recetas de la base de datos
-try {
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $recetas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $mensaje = "Error al cargar las recetas: " . $e->getMessage();
-    $tipo_mensaje = "error";
+    // Obtener todas las recetas
+    try {
+        $sql = "SELECT r.*, c.color as categoria_color, c.nombre as categoria_nombre
+                FROM recetas r
+                LEFT JOIN categorias c ON r.categoria_id = c.id
+                ORDER BY r.id DESC";
+        $stmt = $pdo->query($sql);
+        $recetas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $mensaje = "Error al cargar las recetas: " . $e->getMessage();
+        $tipo_mensaje = "error";
+    }
+} else {
+    // Obtener todas las categorías con conteo de recetas
+    try {
+        $sql = "SELECT c.id, c.nombre, c.descripcion, c.color, COUNT(r.id) as recetas_count 
+                FROM categorias c 
+                LEFT JOIN recetas r ON c.id = r.categoria_id
+                GROUP BY c.id, c.nombre 
+                ORDER BY c.nombre";
+        $stmt = $pdo->query($sql);
+        $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $mensaje = "Error al cargar las categorías: " . $e->getMessage();
+        $tipo_mensaje = "error";
+    }
 }
 
 // Función para formatear el tiempo total
-function formatearTiempo($minutos) {
+function formatearTiempo($minutos)
+{
     if ($minutos < 60) {
         return $minutos . ' min';
     }
-    
+
     $horas = floor($minutos / 60);
     $min = $minutos % 60;
-    
+
     if ($min == 0) {
         return $horas . ' h';
     }
-    
+
     return $horas . ' h ' . $min . ' min';
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recetas | Eugenie Herrero</title>
+    <title><?php echo $mostrarCategorias ? "Categorías" : "Recetas"; ?> | Recetario</title>
     <link rel="stylesheet" href="css/styles.css">
-    <style>
-        /* Estilos específicos para la página de recetas */
-        .recipe-card {
-            cursor: pointer;
-        }
-        
-        .recipe-link-big {
-            display: block;
-            width: 100%;
-            background-color: var(--primary);
-            color: white;
-            text-align: center;
-            padding: 12px 0;
-            font-weight: 600;
-            border-radius: 8px;
-            text-decoration: none;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-        }
-        
-        .recipe-link-big:hover {
-            background-color: var(--dark-accent);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .recipe-header-link {
-            text-decoration: none;
-            color: var(--primary);
-        }
-        
-        .recipe-header-link:hover h3 {
-            color: var(--accent);
-        }
-        
-        .recipe-image a {
-            display: block;
-            height: 100%;
-        }
-        
-        .recipe-time {
-            z-index: 2;
-        }
-        
-        .tag.categoria-tag {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        /* Mensaje de recetas vacío */
-        .recetas-vacio {
-            background-color: white;
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            margin-top: 1rem;
-            box-shadow: var(--card-shadow);
-        }
-        
-        .recetas-vacio p {
-            color: var(--light-text);
-            margin-bottom: 1.5rem;
-        }
-        
-        /* Botón para quitar filtro */
-        .btn-quitar-filtro {
-            color: var(--primary);
-            text-decoration: none;
-            margin-left: 8px;
-            font-size: 0.9em;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background-color: var(--light-accent);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-quitar-filtro:hover {
-            background-color: var(--primary);
-            color: white;
-        }
-    </style>
+    <link rel="stylesheet" href="css/categorias.css">
 </head>
+
 <body>
+    <!-- Navigation -->
     <nav>
-        <button class="menu-button">☰</button>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="recetas.php" class="active">Recetas</a></li>
-            <li><a href="categorias.php">Categorías</a></li>
-        </ul>
-    </nav>
-    
-    <?php if ($mensaje): ?>
-    <div class="mensaje-container">
-        <div class="message <?php echo $tipo_mensaje; ?>-message">
-            <?php echo $mensaje; ?>
-        </div>
+    <div class="menu-container">
+        <button class="menu-button" id="openMenu">☰</button>
     </div>
+    <div class="brand-container">
+        <a href="index.php" class="nav-brand">Recetario</a>
+    </div>
+    <div class="placeholder-container">
+        <!-- Empty container to balance the grid layout -->
+    </div>
+</nav>
+
+<!-- Side Menu -->
+<div class="menu-overlay" id="menuOverlay"></div>
+<div class="side-menu" id="sideMenu">
+    <div class="side-menu-content">
+        <div class="menu-header">
+            <h3>Recetario</h3>
+            <button class="close-menu" id="closeMenu">×</button>
+        </div>
+        <ul>
+            <li><a href="index.php">Inicio</a></li>
+            <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
+            <li><a href="recetas.php">Recetas</a></li>
+            <li><a href="categorias.php">Agregar Categorias</a></li>
+            <li><a href="categorias.php">Categorias</a></li>
+        </ul>
+    </div>
+</div>
+
+    <?php if ($mensaje): ?>
+        <div class="mensaje-container">
+            <div class="message <?php echo $tipo_mensaje; ?>-message">
+                <?php echo $mensaje; ?>
+            </div>
+        </div>
     <?php endif; ?>
-    
+
     <header>
         <div class="container">
             <div class="header-content">
-                <h1>Recetas</h1>
-                <?php if (!empty($filtroCategoria)): ?>
-                    <h3>Categoría: <?php echo htmlspecialchars($filtroCategoria); ?> <a href="recetas.php" class="btn-quitar-filtro">(Ver todas)</a></h3>
+                <?php if ($mostrarCategorias): ?>
+                    <h1>Categorías de Recetas</h1>
+                    <p>Explora y organiza tus recetas por categoría</p>
+                    <div class="view-options">
+                        <a href="recetas.php?ver_todas=true" class="btn-ver-todas">Ver todas las recetas</a>
+                    </div>
                 <?php else: ?>
+                    <h1>Recetas</h1>
+                    <?php if ($categoriaSeleccionada): ?>
+                        <h3>Categoría: <?php echo $categoriaSeleccionada; ?> <a href="recetas.php"
+                                class="btn-quitar-filtro">(Ver todas las categorías)</a></h3>
+                    <?php else: ?>
+                        <div class="view-options">
+                            <a href="recetas.php" class="btn-ver-categorias">Ver por categorías</a>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -179,98 +164,86 @@ function formatearTiempo($minutos) {
 
     <main>
         <div class="container">
-            <!-- Botón para crear receta -->
+            <!-- Botón para crear receta y categoria -->
             <div class="agregar-receta-container">
                 <a href="backend/agregar_receta.php" class="btn-agregar-receta">Agregar Receta</a>
+                <a href="categorias.php" class="btn-agregar-receta">Agregar Categoria</a>
             </div>
-            
-            <!-- Listado de recetas en formato de tarjetas -->
-            <?php if (empty($recetas)): ?>
-                <div class="recetas-vacio">
-                    <p>Aún no hay recetas en el recetario.</p>
-                </div>
+  
+
+            <?php if ($mostrarCategorias): ?>
+                <!-- Mostrar Categorías -->
+                <?php if (empty($categorias)): ?>
+                    <div class="categorias-vacio">
+                        <p>Aún no hay categorías disponibles. Puedes agregar una nueva categoría en la página de Categorías.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="categorias-grid">
+                        <?php foreach ($categorias as $categoria): ?>
+                            <div class="categoria-card">
+                                <div class="categoria-header" style="background-color: <?php echo htmlspecialchars($categoria['color']); ?>">
+                                    <h3><?php echo htmlspecialchars($categoria['nombre']); ?></h3>
+                                    <span class="categoria-count">
+                                        <?php echo $categoria['recetas_count']; ?>
+                                        receta<?php echo ($categoria['recetas_count'] != 1) ? 's' : ''; ?>
+                                    </span>
+                                </div>
+                                <div class="categoria-body">
+                                    <?php if (!empty($categoria['descripcion'])): ?>
+                                        <p><?php echo htmlspecialchars($categoria['descripcion']); ?></p>
+                                    <?php endif; ?>
+                                    <a href="recetas.php?categoria=<?php echo urlencode($categoria['nombre']); ?>"
+                                        class="btn-ver-recetas">
+                                        Ver recetas
+                                    </a>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             <?php else: ?>
-                <div class="recipes-container">
-                    <?php foreach ($recetas as $receta): ?>
-                        <div class="recipe-card" onclick="window.location.href='receta.php?id=<?php echo $receta['id']; ?>'">
-                            <div class="recipe-image">
-                                <a href="receta.php?id=<?php echo $receta['id']; ?>">
-                                    <?php if (!empty($receta['image_path'])): ?>
-                                        <img src="<?php echo htmlspecialchars($receta['image_path']); ?>" alt="<?php echo htmlspecialchars($receta['title']); ?>">
-                                    <?php elseif (!empty($receta['image_url'])): ?>
-                                        <img src="<?php echo htmlspecialchars($receta['image_url']); ?>" alt="<?php echo htmlspecialchars($receta['title']); ?>">
-                                    <?php else: ?>
-                                        <img src="img/placeholder-receta.jpg" alt="<?php echo htmlspecialchars($receta['title']); ?>">
-                                    <?php endif; ?>
-                                </a>
-                                <div class="recipe-time">
-                                    <?php echo formatearTiempo($receta['prep_time_minutes'] + $receta['cook_time_minutes']); ?>
+                <!-- Mostrar Recetas -->
+                <?php if (empty($recetas)): ?>
+                    <div style="background-color: white; border-radius: 12px; padding: 2rem; text-align: center; margin-top: 1rem; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);">
+                        <p style="color: #636e72; margin-bottom: 1.5rem;">
+                            <?php if ($categoriaSeleccionada): ?>
+                                No hay recetas disponibles en la categoría "<?php echo $categoriaSeleccionada; ?>".
+                            <?php else: ?>
+                                Aún no hay recetas en el recetario.
+                            <?php endif; ?>
+                        </p>
+                    </div>
+                <?php else: ?>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                        <?php foreach ($recetas as $receta): ?>
+                            <a href="receta.php?id=<?php echo $receta['id']; ?>" style="text-decoration: none;">
+                                <div style="background-color: #ff5400; border-radius: 4px; display: flex; height: 76px; cursor: pointer; overflow: hidden; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                                    <div style="width: 76px; height: 76px; flex-shrink: 0;">
+                                        <?php if (!empty($receta['image_path'])): ?>
+                                            <img src="<?php echo htmlspecialchars($receta['image_path']); ?>"
+                                                alt="<?php echo htmlspecialchars($receta['title']); ?>"
+                                                style="width: 100%; height: 100%; object-fit: cover;">
+                                        <?php elseif (!empty($receta['image_url'])): ?>
+                                            <img src="<?php echo htmlspecialchars($receta['image_url']); ?>"
+                                                alt="<?php echo htmlspecialchars($receta['title']); ?>"
+                                                style="width: 100%; height: 100%; object-fit: cover;">
+                                        <?php else: ?>
+                                            <img src="img/placeholder-receta.jpg"
+                                                alt="<?php echo htmlspecialchars($receta['title']); ?>"
+                                                style="width: 100%; height: 100%; object-fit: cover;">
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div style="padding: 10px; display: flex; align-items: center; flex-grow: 1; position: relative; z-index: 5;">
+                                        <h3 style="font-size: 16px; margin: 0; padding: 0; color: white; font-weight: 600; line-height: 1.2; font-family: 'Montserrat', sans-serif; display: block; visibility: visible; opacity: 1; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+                                            <?php echo htmlspecialchars($receta['title']); ?>
+                                        </h3>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div class="recipe-content">
-                                <a href="receta.php?id=<?php echo $receta['id']; ?>" class="recipe-header-link">
-                                    <h3><?php echo htmlspecialchars($receta['title']); ?></h3>
-                                </a>
-                                
-                                <div class="recipe-meta">
-                                    <span class="difficulty">
-                                        <?php 
-                                        $dificultad = 'Media';
-                                        if (isset($receta['difficulty'])) {
-                                            $dificultad = $receta['difficulty'];
-                                        } elseif (($receta['prep_time_minutes'] + $receta['cook_time_minutes']) < 30) {
-                                            $dificultad = 'Fácil';
-                                        } elseif (($receta['prep_time_minutes'] + $receta['cook_time_minutes']) > 60) {
-                                            $dificultad = 'Difícil';
-                                        }
-                                        echo htmlspecialchars($dificultad);
-                                        ?>
-                                    </span>
-                                    
-                                    <?php if (!empty($receta['portions'])): ?>
-                                        <span><?php echo htmlspecialchars($receta['portions']); ?></span>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <div class="recipe-desc">
-                                    <?php 
-                                    if (!empty($receta['description'])) {
-                                        echo htmlspecialchars(substr($receta['description'], 0, 120)) . (strlen($receta['description']) > 120 ? '...' : '');
-                                    } else {
-                                        // Si no hay descripción, mostrar los primeros ingredientes
-                                        $ingredientes = !empty($receta['ingredients']) ? $receta['ingredients'] : '';
-                                        $ingredientesArray = explode("\n", $ingredientes);
-                                        $primeros = array_slice($ingredientesArray, 0, 2);
-                                        echo !empty($primeros) ? htmlspecialchars(implode(", ", $primeros)) . '...' : 'Receta casera deliciosa';
-                                    }
-                                    ?>
-                                </div>
-                                
-                                <div class="recipe-tags">
-                                    <span class="tag categoria-tag" style="background-color: <?php echo !empty($receta['categoria_color']) ? $receta['categoria_color'] : 'var(--primary)'; ?>">
-                                        <?php echo htmlspecialchars($receta['category']); ?>
-                                    </span>
-                                    
-                                    <?php if (!empty($receta['tags'])): 
-                                        $tags = explode(',', $receta['tags']);
-                                        $count = 0;
-                                        foreach($tags as $tag):
-                                            if ($count < 2 && trim($tag) != ''): // Limitar a 2 etiquetas 
-                                                $count++;
-                                    ?>
-                                            <span class="tag"><?php echo htmlspecialchars(trim($tag)); ?></span>
-                                    <?php 
-                                            endif;
-                                        endforeach;
-                                    endif; ?>
-                                </div>
-                                
-                                <a href="receta.php?id=<?php echo $receta['id']; ?>" class="recipe-link-big">Ver receta</a>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </main>
@@ -282,7 +255,7 @@ function formatearTiempo($minutos) {
                     <a href="index.php">Recetario</a>
                     <p>Cocina casera para todos los días</p>
                 </div>
-                
+
                 <div class="footer-links">
                     <h3>Navegación</h3>
                     <ul>
@@ -296,39 +269,24 @@ function formatearTiempo($minutos) {
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Manejar evento click en tarjetas de recetas
-            const recipeCards = document.querySelectorAll('.recipe-card');
-            recipeCards.forEach(card => {
-                card.addEventListener('click', function(e) {
-                    // Evitar navegación si se hace clic en un enlace
-                    if (e.target.tagName === 'A' || e.target.closest('a')) {
-                        e.stopPropagation();
-                        return;
-                    }
-                    
-                    // Obtener el enlace de esta tarjeta
-                    const link = this.querySelector('.recipe-link-big').getAttribute('href');
-                    window.location.href = link;
-                });
-            });
-            
-            // Manejo del menú responsivo
-            const menuButton = document.querySelector('.menu-button');
-            if (menuButton) {
-                const navUl = document.querySelector('nav ul');
-                
-                menuButton.addEventListener('click', function() {
-                    navUl.classList.toggle('show');
-                });
-            }
-            
+        document.addEventListener('DOMContentLoaded', function () {
+            // Asegurar que el navbar esté fijo
+            const nav = document.querySelector('nav');
+            nav.style.position = 'fixed';
+            nav.style.top = '0';
+            nav.style.left = '0';
+            nav.style.width = '100%';
+            nav.style.zIndex = '1000';
+
+            // Ajustar padding del body
+            document.body.style.paddingTop = '60px';
+
             // Ocultar mensaje después de 5 segundos
             const mensajeContainer = document.querySelector('.mensaje-container');
             if (mensajeContainer) {
-                setTimeout(function() {
+                setTimeout(function () {
                     mensajeContainer.style.opacity = '0';
-                    setTimeout(function() {
+                    setTimeout(function () {
                         mensajeContainer.style.display = 'none';
                     }, 1000);
                 }, 5000);
@@ -336,6 +294,6 @@ function formatearTiempo($minutos) {
         });
     </script>
     <script src="js/menu.js"></script>
-    <script src="js/recipe-cards.js"></script>
 </body>
+
 </html>

@@ -274,29 +274,3 @@ body {
         width: 100%;
     }
 }
-
-.menu-button {
-    font-size: 1.5rem; 
-    background-color: var(--primary);
-    color: var(--light-accent);
-    border: none;
-    border-radius: 8px;
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-}
-
-.menu-button:hover {
-    background-color: var(--secondary);
-    transform: scale(1.1);
-}
-
-.menu-button:active {
-    transform: scale(0.95);
-}
-
-@media (max-width: 768px) {
-    .menu-button {
-        display: block;
-    }
-}
