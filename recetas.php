@@ -267,32 +267,6 @@ function formatearTiempo($minutos)
             </div>
         </div>
     </footer>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Asegurar que el navbar esté fijo
-            const nav = document.querySelector('nav');
-            nav.style.position = 'fixed';
-            nav.style.top = '0';
-            nav.style.left = '0';
-            nav.style.width = '100%';
-            nav.style.zIndex = '1000';
-
-            // Ajustar padding del body
-            document.body.style.paddingTop = '60px';
-
-            // Ocultar mensaje después de 5 segundos
-            const mensajeContainer = document.querySelector('.mensaje-container');
-            if (mensajeContainer) {
-                setTimeout(function () {
-                    mensajeContainer.style.opacity = '0';
-                    setTimeout(function () {
-                        mensajeContainer.style.display = 'none';
-                    }, 1000);
-                }, 5000);
-            }
-        });
-    </script>
     <script src="js/menu.js"></script>
 </body>
 
