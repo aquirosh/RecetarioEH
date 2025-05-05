@@ -85,6 +85,20 @@ function formatearTiempo($minutos)
 
     return $horas . ' h ' . $min . ' min';
 }
+
+// Función para verificar si una imagen existe
+function imagenExiste($path) {
+    if (empty($path)) return false;
+    
+    // Si es una URL externa
+    if (filter_var($path, FILTER_VALIDATE_URL)) {
+        $headers = @get_headers($path);
+        return $headers && strpos($headers[0], '200') !== false;
+    }
+    
+    // Si es un archivo local
+    return file_exists($path);
+}
 ?>
 
 <!DOCTYPE html>
@@ -96,6 +110,89 @@ function formatearTiempo($minutos)
     <title><?php echo $mostrarCategorias ? "Categorías" : "Recetas"; ?> | Recetario</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/categorias.css">
+    <style>
+        .categoria-card {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .categoria-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        
+        .categoria-header {
+            position: relative;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background-position: center;
+            background-size: cover;
+            padding: 20px;
+        }
+        
+        .categoria-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7));
+            z-index: 1;
+        }
+        
+        .categoria-header h3, 
+        .categoria-header .categoria-count {
+            position: relative;
+            z-index: 2;
+            color: white;
+        }
+        
+        .categoria-header h3 {
+            font-size: 24px;
+            margin: 0 0 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .categoria-header .categoria-count {
+            padding: 5px 12px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .categoria-body {
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .categoria-card-link {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+        }
+        
+        .categoria-acciones {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 4;
+        }
+    </style>
 </head>
 
 <body>
@@ -143,7 +240,7 @@ function formatearTiempo($minutos)
             <div class="header-content">
                 <?php if ($mostrarCategorias): ?>
                     <h1>Categorías de Recetas</h1>
-                    <p>Explora y organiza tus recetas por categoría</p>
+                    <p>Explora y organiza tus recetas por categoría - Haz clic en una categoría para ver sus recetas</p>
                     <div class="view-options">
                         <a href="recetas.php?ver_todas=true" class="btn-ver-todas">Ver todas las recetas</a>
                     </div>
@@ -170,7 +267,6 @@ function formatearTiempo($minutos)
                 <a href="categorias.php" class="btn-agregar-receta">Agregar Categoria</a>
             </div>
   
-
             <?php if ($mostrarCategorias): ?>
                 <!-- Mostrar Categorías -->
                 <?php if (empty($categorias)): ?>
@@ -180,22 +276,58 @@ function formatearTiempo($minutos)
                 <?php else: ?>
                     <div class="categorias-grid">
                         <?php foreach ($categorias as $categoria): ?>
+                            <?php
+                            // Obtener la primera imagen de receta para esta categoría (si existe)
+                            $imagenReceta = null;
+                            $imagenUrl = '';
+                            
+                            try {
+                                $stmt = $pdo->prepare("
+                                    SELECT image_path, image_path
+                                    FROM recetas
+                                    WHERE categoria_id = :categoria_id
+                                    AND (image_path IS NOT NULL OR image_path IS NOT NULL)
+                                    ORDER BY id DESC
+                                    LIMIT 1
+                                ");
+                                $stmt->execute([':categoria_id' => $categoria['id']]);
+                                $imagenReceta = $stmt->fetch(PDO::FETCH_ASSOC);
+                                
+                                if ($imagenReceta) {
+                                    if (!empty($imagenReceta['image_path']) && imagenExiste($imagenReceta['image_path'])) {
+                                        $imagenUrl = $imagenReceta['image_path'];
+                                    } elseif (!empty($imagenReceta['image_url']) && imagenExiste($imagenReceta['image_url'])) {
+                                        $imagenUrl = $imagenReceta['image_url'];
+                                    }
+                                }
+                            } catch (PDOException $e) {
+                                // Error silencioso
+                            }
+                            
+                            // Establecer el fondo (color o imagen)
+                            $bgStyle = '';
+                            if (!empty($imagenUrl)) {
+                                $bgStyle = 'background-image: url(\'' . htmlspecialchars($imagenUrl) . '\');';
+                            } else {
+                                $bgStyle = 'background-color: ' . htmlspecialchars($categoria['color']) . ';';
+                            }
+                            ?>
+                            
                             <div class="categoria-card">
-                                <div class="categoria-header" style="background-color: <?php echo htmlspecialchars($categoria['color']); ?>">
+                                <a href="recetas.php?categoria=<?php echo urlencode($categoria['nombre']); ?>" class="categoria-card-link"></a>
+                                
+                                <div class="categoria-header" style="<?php echo $bgStyle; ?>">
                                     <h3><?php echo htmlspecialchars($categoria['nombre']); ?></h3>
                                     <span class="categoria-count">
                                         <?php echo $categoria['recetas_count']; ?>
                                         receta<?php echo ($categoria['recetas_count'] != 1) ? 's' : ''; ?>
                                     </span>
                                 </div>
+                                
                                 <div class="categoria-body">
                                     <?php if (!empty($categoria['descripcion'])): ?>
                                         <p><?php echo htmlspecialchars($categoria['descripcion']); ?></p>
                                     <?php endif; ?>
-                                    <a href="recetas.php?categoria=<?php echo urlencode($categoria['nombre']); ?>"
-                                        class="btn-ver-recetas">
-                                        Ver recetas
-                                    </a>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -224,7 +356,7 @@ function formatearTiempo($minutos)
                                                 alt="<?php echo htmlspecialchars($receta['title']); ?>"
                                                 style="width: 100%; height: 100%; object-fit: cover;">
                                         <?php elseif (!empty($receta['image_url'])): ?>
-                                            <img src="<?php echo htmlspecialchars($receta['image_url']); ?>"
+                                            <img src="<?php echo htmlspecialchars($receta['image_path']); ?>"
                                                 alt="<?php echo htmlspecialchars($receta['title']); ?>"
                                                 style="width: 100%; height: 100%; object-fit: cover;">
                                         <?php else: ?>
@@ -267,6 +399,7 @@ function formatearTiempo($minutos)
             </div>
         </div>
     </footer>
+
     <script src="js/menu.js"></script>
 </body>
 

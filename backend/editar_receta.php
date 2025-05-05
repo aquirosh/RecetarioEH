@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
     $ingredientes = trim($_POST['ingredientes'] ?? '');
     $preparacion = trim($_POST['preparacion'] ?? '');
     $tiempo_prep = (int)($_POST['tiempo_prep'] ?? 0);
-    $tiempo_coccion = (int)($_POST['tiempo_coccion'] ?? 0);
+    $tiempo_coccion = ($_POST['tiempo_coccion'] === '') ? 0 : (int)$_POST['tiempo_coccion']; // MODIFICADO: Asignar 0 si está vacío
     $porciones = ($_POST['porciones'] ?? '');
     $recetaId = (int)($_POST['receta_id'] ?? 0);
     
@@ -137,9 +137,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
         $errores[] = "El tiempo de preparación debe ser mayor a 0.";
     }
     
-    if ($tiempo_coccion < 0) {
-        $errores[] = "El tiempo de cocción no puede ser negativo.";
-    }
+    // MODIFICADO: Eliminamos esta validación ya que el tiempo de cocción puede ser 0
+    // if ($tiempo_coccion < 0) {
+    //     $errores[] = "El tiempo de cocción no puede ser negativo.";
+    // }
     
     // Si es una categoría nueva, insertarla primero y obtener su ID
     if ($categoria === 'nueva' && !empty($_POST['nuevaCategoria'])) {
@@ -186,30 +187,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
         }
     }
     
-    // Solución simplificada para el manejo de la imagen
-    $imagen_path = $receta['image_path']; // Mantener la imagen actual como valor predeterminado
+    // Procesar la imagen si se ha subido una nueva
+    $imagen_actual = $receta['image_path'] ?? '';
     
-    // Solo procesamos la imagen si se ha subido una nueva
+    // Si se subió una nueva imagen
     if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] != UPLOAD_ERR_NO_FILE) {
         $imagenResultado = subirImagen($_FILES['imagen']);
-        
-        if ($imagenResultado['success']) {
-            // Si la subida es exitosa, actualizar la ruta
-            if (!empty($imagen_path) && file_exists('../' . $imagen_path)) {
-                // Eliminar imagen anterior si existe
-                unlink('../' . $imagen_path);
-            }
-            $imagen_path = $imagenResultado['filename'];
-        } elseif ($imagenResultado['error'] !== null) {
+        if (!$imagenResultado['success'] && $imagenResultado['error'] !== null) {
             $errores[] = $imagenResultado['error'];
+        } else if ($imagenResultado['success']) {
+            // Si hay una imagen anterior, la eliminamos
+            if (!empty($imagen_actual) && file_exists('../' . $imagen_actual)) {
+                unlink('../' . $imagen_actual);
+            }
+            $imagen_actual = $imagenResultado['filename'];
         }
     }
     
     // Si no hay errores, actualizar la receta
     if (empty($errores)) {
         try {
-            // Primero, actualizamos todos los campos excepto la imagen
-            $sql = "UPDATE recetas SET 
+            $stmt = $pdo->prepare("
+                UPDATE recetas SET 
                     title = :titulo,
                     category = :categoria,
                     categoria_id = :categoria_id,
@@ -217,18 +216,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
                     prep_time_minutes = :tiempo_prep,
                     cook_time_minutes = :tiempo_coccion,
                     ingredients = :ingredientes,
-                    preparation_steps = :preparacion";
+                    preparation_steps = :preparacion,
+                    image_path = :imagen_path
+                WHERE id = :id
+            ");
             
-            // Solo incluimos el campo image_path si se subió una nueva imagen
-            if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] != UPLOAD_ERR_NO_FILE && $imagenResultado['success']) {
-                $sql .= ", image_path = :imagen_path";
-            }
-            
-            $sql .= " WHERE id = :id";
-            
-            $stmt = $pdo->prepare($sql);
-            
-            $params = [
+            $resultado = $stmt->execute([
                 ':titulo' => $titulo,
                 ':categoria' => $categoria,
                 ':categoria_id' => $categoria_id,
@@ -237,15 +230,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
                 ':tiempo_coccion' => $tiempo_coccion,
                 ':ingredientes' => $ingredientes,
                 ':preparacion' => $preparacion,
+                ':imagen_path' => $imagen_actual,
                 ':id' => $recetaId
-            ];
-            
-            // Solo añadimos el parámetro imagen_path si se subió una nueva imagen
-            if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] != UPLOAD_ERR_NO_FILE && $imagenResultado['success']) {
-                $params[':imagen_path'] = $imagen_path;
-            }
-            
-            $resultado = $stmt->execute($params);
+            ]);
             
             if ($resultado) {
                 $_SESSION['mensaje'] = "La receta se ha actualizado correctamente.";
@@ -436,6 +423,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
                         <div class="form-group">
                             <label for="tiempo_coccion">Tiempo de Cocción (minutos)</label>
                             <input type="number" id="tiempo_coccion" name="tiempo_coccion" class="form-control" value="<?php echo $receta['cook_time_minutes']; ?>" min="0">
+                            <p class="help-text">Usar 0 para recetas sin cocción (como ensaladas)</p>
                         </div>
                         
                         <div class="form-group">

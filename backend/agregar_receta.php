@@ -7,8 +7,8 @@ function validarDatos($datos)
 {
     $errores = [];
 
-    // Validación de campos requeridos
-    $camposRequeridos = ['title', 'category', 'prep_time', 'cook_time', 'ingredients', 'preparation_steps'];
+    // Validación de campos requeridos - MODIFICADO: Se quitó cook_time de los campos requeridos
+    $camposRequeridos = ['title', 'category', 'prep_time', 'ingredients', 'preparation_steps'];
     foreach ($camposRequeridos as $campo) {
         if (empty(trim($datos[$campo]))) {
             $errores[] = "El campo " . ucfirst(str_replace('_', ' ', $campo)) . " es obligatorio.";
@@ -20,8 +20,12 @@ function validarDatos($datos)
         $errores[] = "El tiempo de preparación debe ser un número positivo.";
     }
 
-    if (!empty($datos['cook_time']) && (!is_numeric($datos['cook_time']) || $datos['cook_time'] < 0)) {
-        $errores[] = "El tiempo de cocción debe ser un número positivo.";
+    // MODIFICADO: Permitir 0 para tiempo de cocción
+    if ($datos['cook_time'] === '') {
+        // Si está vacío, establecerlo como 0
+        $datos['cook_time'] = 0;
+    } else if (!is_numeric($datos['cook_time']) || $datos['cook_time'] < 0) {
+        $errores[] = "El tiempo de cocción debe ser un número positivo o cero.";
     }
 
     return $errores;
@@ -408,9 +412,10 @@ try {
                     </div>
 
                     <div class="form-group">
-                        <label for="cook_time">Tiempo de cocción (minutos) *</label>
+                        <label for="cook_time">Tiempo de cocción (minutos)</label>
                         <input type="number" id="cook_time" name="cook_time" class="form-control"
-                            value="<?php echo $datosFormulario['cook_time']; ?>" min="0" required>
+                            value="<?php echo $datosFormulario['cook_time']; ?>" min="0">
+                        <p class="help-text">Usar 0 para recetas sin cocción (como ensaladas)</p>
                     </div>
 
                     <div class="form-group">

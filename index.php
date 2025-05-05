@@ -53,6 +53,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recetario Eugenie Herrero</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/categorias.css">
     <style>
         /* Estilos para mejorar las tarjetas */
         .recipe-card {
@@ -93,33 +94,53 @@ try {
             color: white;
         }
         
-        /* Estilos para categorías populares */
-        .category-card {
+        /* Estilos mejorados para categorías */
+        .categoria-card {
             position: relative;
             border-radius: 12px;
             overflow: hidden;
-            height: 180px;
-            text-decoration: none;
-            display: block;
-            box-shadow: var(--card-shadow);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
+            height: 180px;
+            display: block;
+            text-decoration: none;
         }
         
-        .category-card:hover {
+        .categoria-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
         }
         
-        .category-color-overlay {
+        .categoria-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .categoria-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .categoria-card:hover .categoria-image img {
+            transform: scale(1.1);
+        }
+        
+        .categoria-color-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 1;
+            opacity: 0.7;
         }
         
-        .category-card::after {
+        .categoria-card::after {
             content: '';
             position: absolute;
             top: 0;
@@ -130,7 +151,7 @@ try {
             z-index: 1;
         }
         
-        .category-card h3 {
+        .categoria-card h3 {
             position: absolute;
             bottom: 20px;
             left: 20px;
@@ -141,7 +162,7 @@ try {
             transition: transform 0.3s ease;
         }
         
-        .category-count {
+        .categoria-count {
             position: absolute;
             top: 15px;
             right: 15px;
@@ -153,7 +174,7 @@ try {
             z-index: 2;
         }
         
-        .category-card:hover h3 {
+        .categoria-card:hover h3 {
             transform: translateY(-5px);
         }
         
@@ -309,14 +330,41 @@ try {
                 <?php else: ?>
                     <div class="categories-container">
                         <?php foreach ($categoriasPopulares as $categoria): ?>
-                            <a href="recetas.php?categoria=<?php echo urlencode($categoria['nombre']); ?>" class="category-card">
-                                <div class="category-color-overlay" style="background-color: <?php echo $categoria['color']; ?>; opacity: 0.7;"></div>
-                                <span class="category-count">
+                            <a href="recetas.php?categoria=<?php echo urlencode($categoria['nombre']); ?>" class="categoria-card">
+                                <div class="categoria-color-overlay" style="background-color: <?php echo $categoria['color']; ?>;"></div>
+                                
+                                <!-- Imagen para la categoría (intentamos encontrar una imagen de receta de esta categoría) -->
+                                <div class="categoria-image">
+                                    <?php
+                                    // Intentar encontrar una imagen para esta categoría
+                                    try {
+                                        $imgSql = "SELECT image_path FROM recetas WHERE categoria_id = :categoria_id AND image_path IS NOT NULL LIMIT 1";
+                                        $imgStmt = $pdo->prepare($imgSql);
+                                        $imgStmt->execute([':categoria_id' => $categoria['id']]);
+                                        $imagenReceta = $imgStmt->fetchColumn();
+                                    } catch (PDOException $e) {
+                                        $imagenReceta = null;
+                                    }
+                                    ?>
+                                    
+                                    <?php if (!empty($imagenReceta)): ?>
+                                        <img src="<?php echo htmlspecialchars($imagenReceta); ?>" alt="<?php echo htmlspecialchars($categoria['nombre']); ?>">
+                                    <?php else: ?>
+                                        <!-- Imagen de placeholder para la categoría -->
+                                        <img src="img/placeholder-categoria.jpg" alt="<?php echo htmlspecialchars($categoria['nombre']); ?>">
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <span class="categoria-count">
                                     <?php echo $categoria['recetas_count']; ?> receta<?php echo ($categoria['recetas_count'] != 1) ? 's' : ''; ?>
                                 </span>
                                 <h3><?php echo htmlspecialchars($categoria['nombre']); ?></h3>
                             </a>
                         <?php endforeach; ?>
+                    </div>
+                    
+                    <div class="view-more">
+                        <a href="recetas.php" class="btn">Ver todas las categorías</a>
                     </div>
                 <?php endif; ?>
             </div>
