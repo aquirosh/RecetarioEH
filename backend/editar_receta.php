@@ -352,7 +352,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
                 <li><a href="agregar_receta.php">Agregar Recetas</a></li>
                 <li><a href="../recetas.php">Recetas</a></li>
                 <li><a href="../categorias.php">Agregar Categorias</a></li>
-                <li><a href="../categorias.php">Categorias</a></li>
             </ul>
         </div>
     </div>

@@ -306,7 +306,7 @@ try {
 
 <body>
     <!-- Navigation -->
-<nav>
+    <nav>
     <div class="menu-container">
         <button class="menu-button" id="openMenu">☰</button>
     </div>
@@ -328,9 +328,9 @@ try {
         </div>
         <ul>
             <li><a href="../index.php">Inicio</a></li>
-            <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
+            <li><a href="agregar_receta.php">Agregar Recetas</a></li>
             <li><a href="../recetas.php">Recetas</a></li>
-            <li><a href="../categorias.php">Categorias</a></li>
+            <li><a href="../categorias.php">Agregar Categorias</a></li>
         </ul>
     </div>
 </div>
