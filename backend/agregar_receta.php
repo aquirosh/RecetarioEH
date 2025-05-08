@@ -225,6 +225,10 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agregar Receta | Eugenie Herrero</title>
+
+    <link rel="icon" href="img/recetario.png" type="image/png">
+    <link rel="shortcut icon" href="img/recetario.png" type="image/png">
+
     <link rel="stylesheet" href="../css/styles.css">
     <style>
         /* Estilos para el navbar fijo */

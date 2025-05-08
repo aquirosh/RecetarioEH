@@ -96,7 +96,11 @@ function formatearTiempo($minutos) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $receta ? htmlspecialchars($receta['title']) : 'Receta no encontrada'; ?> | Recetario QH</title>
+    <title><?php echo $receta ? htmlspecialchars($receta['title']) : 'Receta no encontrada'; ?> | Recetario</title>
+
+    <link rel="icon" href="img/recetario.png" type="image/png">
+    <link rel="shortcut icon" href="img/recetario.png" type="image/png">
+
     <link rel="stylesheet" href="css/receta.css">
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
@@ -175,6 +179,7 @@ function formatearTiempo($minutos) {
                     </div>
 
                     <div class="receta-layout">
+                        <!-- Imagen e información rápida de la receta -->
                         <div class="receta-info-superior">
                             <!-- Imagen de la receta -->
                             <?php if (!empty($receta['image_path'])): ?>
@@ -249,17 +254,18 @@ function formatearTiempo($minutos) {
                                     </div>
                                     <?php endif; ?>
                                 </div>
-
-                                <!-- Sección de ingredientes -->
-                                <div class="receta-seccion">
-                                    <h2>Ingredientes</h2>
-                                    <?php echo formatearIngredientes($receta['ingredients']); ?>
-                                </div>
                             </div>
                         </div>
 
-                        <!-- Sección de preparación con mayor espacio -->
-                        <div class="receta-contenido">
+                        <!-- Ingredientes y preparación en columnas paralelas -->
+                        <div class="receta-contenido-paralelo">
+                            <!-- Columna de ingredientes -->
+                            <div class="receta-seccion ingredientes-seccion">
+                                <h2>Ingredientes</h2>
+                                <?php echo formatearIngredientes($receta['ingredients']); ?>
+                            </div>
+                            
+                            <!-- Columna de preparación -->
                             <div class="receta-seccion preparacion-seccion">
                                 <h2>Preparación</h2>
                                 <?php echo formatearPasos($receta['preparation_steps']); ?>

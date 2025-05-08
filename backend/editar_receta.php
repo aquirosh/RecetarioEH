@@ -262,6 +262,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Receta | Recetario QH</title>
+
+    <link rel="icon" href="img/recetario.png" type="image/png">
+    <link rel="shortcut icon" href="img/recetario.png" type="image/png">
+
     <link rel="stylesheet" href="../css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
     <style>

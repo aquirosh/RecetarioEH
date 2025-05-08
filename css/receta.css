@@ -46,6 +46,31 @@ body {
     margin: var(--spacing-md) 0;
 }
 
+/* Estilos modificados para botones */
+.btn-secondary {
+    background-color: #2196F3 !important; /* Azul más intenso */
+    color: white !important;
+    border: none !important;
+}
+
+.btn-secondary:hover {
+    background-color: #1976D2 !important; /* Azul más oscuro al pasar el ratón */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+}
+
+.btn-danger {
+    background-color: #F44336 !important; /* Rojo más intenso */
+    color: white !important;
+    border: none !important;
+}
+
+.btn-danger:hover {
+    background-color: #D32F2F !important; /* Rojo más oscuro al pasar el ratón */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+}
+
 /* Layout principal */
 .receta-layout {
     display: grid;
@@ -140,6 +165,14 @@ body {
     display: block;
 }
 
+/* Nuevo estilo para las columnas paralelas */
+.receta-contenido-paralelo {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Divide en dos columnas iguales */
+    gap: var(--spacing-md);
+    width: 100%;
+}
+
 /* Secciones de Ingredientes y Preparación */
 .receta-seccion {
     margin-bottom: var(--spacing-lg);
@@ -182,16 +215,13 @@ body {
     line-height: 1.8;
 }
 
-/* Contenido principal */
-.receta-contenido {
-    width: 100%;
-}
-
-.preparacion-seccion {
+/* Estilos para las secciones en columnas */
+.ingredientes-seccion, .preparacion-seccion {
     background-color: #fff;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     border-radius: 12px;
     box-shadow: var(--card-shadow);
+    height: 100%;
 }
 
 /* Footer de la receta */
@@ -246,6 +276,11 @@ body {
     
     body {
         padding-top: 68px; /* Reducir para móviles */
+    }
+    
+    /* Responsive para las columnas paralelas */
+    .receta-contenido-paralelo {
+        grid-template-columns: 1fr; /* Cambia a una columna en móviles */
     }
 }
 
