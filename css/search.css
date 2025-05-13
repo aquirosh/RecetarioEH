@@ -1,0 +1,584 @@
+/* Estilos para la página de búsqueda */
+
+/* Asegurar que el navbar esté fijo */
+nav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+    height: 60px !important;
+    box-sizing: border-box !important;
+}
+
+body {
+    padding-top: 60px !important;
+}
+
+/* Estilos para el formulario de búsqueda */
+.search-bar-container {
+    margin: 2rem auto;
+    max-width: 600px;
+}
+
+.search-form {
+    display: flex;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 50px;
+    overflow: hidden;
+    background-color: white;
+}
+
+.search-input {
+    flex: 1;
+    padding: 15px 25px;
+    font-size: 18px;
+    border: none;
+    outline: none;
+    width: 100%;
+    border-radius: 50px;
+}
+
+.search-button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 15px 22px;
+    cursor: pointer;
+    border-radius: 0 50px 50px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.search-button:hover {
+    background-color: #e63900;
+}
+
+.search-button svg {
+    stroke: white;
+}
+
+/* Resumen de resultados */
+.search-results-summary {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 16px;
+    color: var(--light-text);
+}
+
+/* Secciones de resultados */
+.search-section {
+    margin: 3rem 0;
+}
+
+.search-section h2 {
+    font-size: 28px;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+    border-bottom: 2px solid var(--light-accent);
+    padding-bottom: 10px;
+}
+
+/* Estilos para los resultados de recetas */
+.search-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.receta-search-item {
+    display: flex;
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.receta-search-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+}
+
+.receta-search-image {
+    flex: 0 0 120px;
+    height: 120px;
+    position: relative;
+}
+
+.receta-search-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.recipe-time {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: var(--accent);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+}
+
+.receta-search-content {
+    padding: 15px;
+    flex: 1;
+}
+
+.receta-search-content h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    color: var(--primary);
+}
+
+.receta-search-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 14px;
+    color: var(--light-text);
+    margin-bottom: 10px;
+}
+
+.difficulty {
+    font-weight: 500;
+}
+
+.search-highlight {
+    background-color: rgba(255, 84, 0, 0.08);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.search-highlight p {
+    margin: 0;
+    line-height: 1.5;
+    color: var(--text);
+}
+
+.categoria-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+/* Resaltado de términos de búsqueda */
+.resaltado {
+    background-color: rgba(255, 84, 0, 0.2);
+    padding: 0 3px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+/* Mensaje de no resultados */
+.no-results {
+    text-align: center;
+    background-color: white;
+    border-radius: 12px;
+    padding: 3rem;
+    margin: 2rem 0;
+    box-shadow: var(--card-shadow);
+}
+
+.no-results-icon {
+    margin-bottom: 1.5rem;
+}
+
+.no-results-icon svg {
+    color: var(--light-text);
+    opacity: 0.8;
+}
+
+.no-results h2 {
+    font-size: 24px;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.no-results p {
+    margin-bottom: 2rem;
+    color: var(--light-text);
+}
+
+.no-results-suggestions {
+    background-color: var(--light-accent);
+    padding: 1.5rem;
+    border-radius: 8px;
+    max-width: 400px;
+    margin: 0 auto 2rem;
+    text-align: left;
+}
+
+.no-results-suggestions h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 18px;
+    color: var(--primary);
+}
+
+.no-results-suggestions ul {
+    padding-left: 1.5rem;
+    margin: 0;
+}
+
+.no-results-suggestions li {
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+/* Página de búsqueda inicial */
+.search-info {
+    text-align: center;
+    background-color: white;
+    border-radius: 12px;
+    padding: 3rem;
+    margin: 2rem 0;
+    box-shadow: var(--card-shadow);
+}
+
+.search-info-icon {
+    margin-bottom: 1.5rem;
+}
+
+.search-info-icon svg {
+    color: var(--primary);
+    opacity: 0.8;
+}
+
+.search-info h2 {
+    font-size: 24px;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.search-info p {
+    margin-bottom: 2rem;
+    color: var(--light-text);
+}
+
+.search-examples {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.search-examples h3 {
+    margin-bottom: 1rem;
+    font-size: 18px;
+    color: var(--primary);
+}
+
+.search-examples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.search-example-item {
+    text-decoration: none;
+    padding: 0.8rem;
+    background-color: var(--light-accent);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.search-example-item:hover {
+    background-color: var(--primary);
+    transform: translateY(-3px);
+}
+
+.search-example-term {
+    color: var(--primary);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.search-example-item:hover .search-example-term {
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-bar-container {
+        padding: 0 1rem;
+    }
+    
+    .search-input {
+        font-size: 16px;
+        padding: 12px 20px;
+    }
+    
+    .search-button {
+        padding: 12px 18px;
+    }
+    
+    .search-info,
+    .no-results {
+        padding: 2rem 1.5rem;
+    }
+    
+    .search-results-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Estilo para la barra de búsqueda en la barra de navegación */
+.nav-search-container {
+    position: relative;
+    margin-left: auto;
+    margin-right: 1rem;
+}
+
+.nav-search-form {
+    display: flex;
+    align-items: center;
+}
+
+.nav-search-input {
+    padding: 8px 15px;
+    font-size: 14px;
+    border: none;
+    outline: none;
+    border-radius: 20px 0 0 20px;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    width: 180px;
+    transition: all 0.3s ease;
+}
+
+.nav-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-search-input:focus {
+    background-color: rgba(255, 255, 255, 0.25);
+    width: 200px;
+}
+
+.nav-search-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 0 20px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-search-button:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.nav-search-button svg {
+    width: 16px;
+    height: 16px;
+    stroke: white;
+}
+
+/* Responsive para barra de búsqueda en navegación */
+@media (max-width: 768px) {
+    .nav-search-container {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100%;
+        padding: 10px;
+        background-color: var(--primary);
+        z-index: 999;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .nav-search-container.visible {
+        display: block;
+    }
+    
+    .nav-search-form {
+        width: 100%;
+    }
+    
+    .nav-search-input {
+        width: 100%;
+    }
+    
+    /* Botón para mostrar/ocultar búsqueda en móvil */
+    .search-toggle-btn {
+        background: none;
+        border: none;
+        color: white;
+        margin-left: 10px;
+        padding: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Botón para limpiar campo de búsqueda */
+.search-form.has-clear-btn .search-input,
+.nav-search-form.has-clear-btn .nav-search-input {
+    padding-right: 35px; /* Espacio para el botón de limpiar */
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 55px; /* Posición justo antes del botón de búsqueda */
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(0, 0, 0, 0.4);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+.search-clear-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--primary);
+}
+
+.nav-search-form .search-clear-btn {
+    right: 40px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+}
+
+/* Animación de error en la búsqueda */
+@keyframes searchErrorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.search-error {
+    animation: searchErrorShake 0.4s ease-in-out;
+    background-color: rgba(255, 84, 0, 0.1) !important;
+    border: 1px solid var(--accent) !important;
+}
+
+/* Estilos para categorías en la página principal (estilo gradiente) */
+.categorias-section {
+    padding: 2rem 0;
+    margin-bottom: 3rem;
+}
+
+.categorias-section h2 {
+    text-align: center;
+    color: var(--primary);
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.categorias-section h2:after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background-color: var(--accent);
+}
+
+.categoria-card {
+    position: relative;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.categoria-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.categoria-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
+    z-index: 1;
+}
+
+.categoria-card h3 {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: white;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 700;
+    z-index: 2;
+    transition: transform 0.3s ease;
+}
+
+.categoria-count {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 2;
+}
+
+.categoria-card:hover h3 {
+    transform: translateY(-5px);
+}
+
+.ver-recetas {
+    display: inline-block;
+    position: absolute;
+    left: 20px;
+    bottom: 60px;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 10px;
+    border-radius: 20px;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.categoria-card:hover .ver-recetas {
+    opacity: 1;
+    transform: translateY(0);
+}

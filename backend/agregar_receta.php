@@ -230,6 +230,7 @@ try {
     <link rel="shortcut icon" href="img/recetario.png" type="image/png">
 
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/search.css">
     <style>
         /* Estilos para el navbar fijo */
         nav {
@@ -316,6 +317,17 @@ try {
     </div>
     <div class="brand-container">
         <a href="../index.php" class="nav-brand">Recetario</a>
+    </div>
+    <div class="nav-search-container">
+        <form action="../search.php" method="GET" class="nav-search-form">
+            <input type="text" name="q" placeholder="Buscar..." class="nav-search-input">
+            <button type="submit" class="nav-search-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+        </form>
     </div>
     <div class="placeholder-container">
         <!-- Empty container to balance the grid layout -->

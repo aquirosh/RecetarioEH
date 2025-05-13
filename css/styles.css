@@ -1140,3 +1140,134 @@ footer {
     font-size: 26px;
   }
 }
+.recipe-card {
+  cursor: pointer;
+}
+
+.recipe-link-big {
+  display: block;
+  width: 100%;
+  background-color: var(--primary);
+  color: white;
+  text-align: center;
+  padding: 12px 0;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  margin-top: 15px;
+  transition: all 0.3s ease;
+}
+
+.recipe-link-big:hover {
+  background-color: var(--dark-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-header-link {
+  text-decoration: none;
+  color: var(--primary);
+}
+
+.recipe-header-link:hover h3 {
+  color: var(--accent);
+}
+
+.tag.categoria-tag {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* Estilos mejorados para categorías */
+.categoria-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  height: 180px;
+  display: block;
+  text-decoration: none;
+}
+
+.categoria-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.categoria-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.categoria-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.categoria-card:hover .categoria-image img {
+  transform: scale(1.1);
+}
+
+.categoria-color-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0.7;
+}
+
+.categoria-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.7));
+  z-index: 1;
+}
+
+.categoria-card h3 {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  color: white;
+  font-size: 20px;
+  z-index: 2;
+  margin: 0;
+  transition: transform 0.3s ease;
+}
+
+.categoria-count {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: rgba(255,255,255,0.2);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  z-index: 2;
+}
+
+.categoria-card:hover h3 {
+  transform: translateY(-5px);
+}
+
+/* Mensaje cuando no hay datos */
+.no-data-message {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  margin: 2rem 0;
+  box-shadow: var(--card-shadow);
+}
