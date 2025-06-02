@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
     $ingredientes = trim($_POST['ingredientes'] ?? '');
     $preparacion = trim($_POST['preparacion'] ?? '');
     $tiempo_prep = (int)($_POST['tiempo_prep'] ?? 0);
-    $tiempo_coccion = ($_POST['tiempo_coccion'] === '') ? 0 : (int)$_POST['tiempo_coccion']; // MODIFICADO: Asignar 0 si está vacío
+    $tiempo_coccion = ($_POST['tiempo_coccion'] === '') ? 0 : (int)$_POST['tiempo_coccion'];
     $porciones = ($_POST['porciones'] ?? '');
     $recetaId = (int)($_POST['receta_id'] ?? 0);
     
@@ -136,11 +136,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
     if ($tiempo_prep <= 0) {
         $errores[] = "El tiempo de preparación debe ser mayor a 0.";
     }
-    
-    // MODIFICADO: Eliminamos esta validación ya que el tiempo de cocción puede ser 0
-    // if ($tiempo_coccion < 0) {
-    //     $errores[] = "El tiempo de cocción no puede ser negativo.";
-    // }
     
     // Si es una categoría nueva, insertarla primero y obtener su ID
     if ($categoria === 'nueva' && !empty($_POST['nuevaCategoria'])) {
@@ -187,20 +182,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
         }
     }
     
-    // Procesar la imagen si se ha subido una nueva
-    $imagen_actual = $receta['image_path'] ?? '';
+    // Consultar la imagen actual directamente de la base de datos para asegurarnos
+    try {
+        $stmt = $pdo->prepare("SELECT image_path FROM recetas WHERE id = :id");
+        $stmt->execute([':id' => $recetaId]);
+        $imagen_path = $stmt->fetchColumn();
+    } catch (PDOException $e) {
+        // Si hay error, usamos el valor del objeto receta
+        $imagen_path = $receta['image_path'];
+    }
     
-    // Si se subió una nueva imagen
-    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] != UPLOAD_ERR_NO_FILE) {
+    // Solo procesamos la imagen si se ha subido una nueva
+    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
         $imagenResultado = subirImagen($_FILES['imagen']);
         if (!$imagenResultado['success'] && $imagenResultado['error'] !== null) {
             $errores[] = $imagenResultado['error'];
         } else if ($imagenResultado['success']) {
-            // Si hay una imagen anterior, la eliminamos
-            if (!empty($imagen_actual) && file_exists('../' . $imagen_actual)) {
-                unlink('../' . $imagen_actual);
+            // Si la subida fue exitosa y había una imagen anterior, la eliminamos
+            if (!empty($imagen_path) && file_exists('../' . $imagen_path)) {
+                unlink('../' . $imagen_path);
             }
-            $imagen_actual = $imagenResultado['filename'];
+            $imagen_path = $imagenResultado['filename'];
         }
     }
     
@@ -230,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
                 ':tiempo_coccion' => $tiempo_coccion,
                 ':ingredientes' => $ingredientes,
                 ':preparacion' => $preparacion,
-                ':imagen_path' => $imagen_actual,
+                ':imagen_path' => $imagen_path,
                 ':id' => $recetaId
             ]);
             
@@ -262,12 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Receta | Recetario QH</title>
-
-    <link rel="icon" href="img/recetario.png" type="image/png">
-    <link rel="shortcut icon" href="img/recetario.png" type="image/png">
-
     <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/search.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
     <style>
         .image-preview-container {
@@ -339,17 +336,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
         <div class="brand-container">
             <a href="../index.php" class="nav-brand">Recetario</a>
         </div>
-        <div class="nav-search-container">
-        <form action="../search.php" method="GET" class="nav-search-form">
-            <input type="text" name="q" placeholder="Buscar..." class="nav-search-input">
-            <button type="submit" class="nav-search-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            </button>
-        </form>
-    </div>
         <div class="placeholder-container">
             <!-- Empty container to balance the grid layout -->
         </div>
@@ -368,6 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_receta'])) {
                 <li><a href="agregar_receta.php">Agregar Recetas</a></li>
                 <li><a href="../recetas.php">Recetas</a></li>
                 <li><a href="../categorias.php">Agregar Categorias</a></li>
+                <li><a href="../categorias.php">Categorias</a></li>
             </ul>
         </div>
     </div>
