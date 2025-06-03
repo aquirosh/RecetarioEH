@@ -2,6 +2,13 @@
 require_once 'backend/db.php'; // Conexión a la base de datos
 session_start(); // Soporte para mensajes de sesión
 
+// Verificar si el usuario está autenticado
+$isAuthenticated = isset($_SESSION['user_id']);
+$currentUser = $isAuthenticated ? [
+    'username' => $_SESSION['username'] ?? '',
+    'nombre' => $_SESSION['nombre'] ?? ''
+] : null;
+
 // Inicializar variables
 $recetas = [];
 $categorias = [];
@@ -113,10 +120,74 @@ function imagenExiste($path) {
     <link rel="shortcut icon" href="img/recetario.png" type="image/png">
 
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/search.css">
     <link rel="stylesheet" href="css/categorias.css">
     
     <style>
+        /* Estilos adicionales para el navbar con autenticación */
+        .user-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+        }
+
+        .user-welcome {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .login-link {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .login-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .user-avatar {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .user-details strong {
+            display: block;
+            color: white;
+            font-size: 16px;
+        }
+
+        .user-details small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .menu-divider {
+            padding: 8px 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+
         .categoria-card {
             background-color: white;
             border-radius: 12px;
@@ -189,14 +260,20 @@ function imagenExiste($path) {
             height: 100%;
             z-index: 3;
         }
-        
-        .categoria-acciones {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 5px;
-            z-index: 4;
+
+        /* Botones de administración solo para usuarios autenticados */
+        .admin-section {
+            display: <?php echo $isAuthenticated ? 'block' : 'none'; ?>;
+        }
+
+        @media (max-width: 768px) {
+            .user-welcome, .login-link {
+                font-size: 12px;
+            }
+            
+            .user-container {
+                padding-right: 5px;
+            }
         }
     </style>
 </head>
@@ -204,33 +281,62 @@ function imagenExiste($path) {
 <body>
     <!-- Navigation -->
     <nav>
-    <div class="menu-container">
-        <button class="menu-button" id="openMenu">☰</button>
-    </div>
-    <div class="brand-container">
-        <a href="index.php" class="nav-brand">Recetario</a>
-    </div>
-    <div class="placeholder-container">
-        <!-- Empty container to balance the grid layout -->
-    </div>
-</nav>
-
-<!-- Side Menu -->
-<div class="menu-overlay" id="menuOverlay"></div>
-<div class="side-menu" id="sideMenu">
-    <div class="side-menu-content">
-        <div class="menu-header">
-            <h3>Recetario</h3>
-            <button class="close-menu" id="closeMenu">×</button>
+        <div class="menu-container">
+            <button class="menu-button" id="openMenu">☰</button>
         </div>
-        <ul>
-            <li><a href="index.php">Inicio</a></li>
-            <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
-            <li><a href="recetas.php">Recetas</a></li>
-            <li><a href="categorias.php">Agregar Categorias</a></li>
-        </ul>
+        <div class="brand-container">
+            <a href="index.php" class="nav-brand">Recetario</a>
+        </div>
+        <div class="user-container">
+            <?php if ($isAuthenticated): ?>
+                <a href="logout.php" class="login-link">Cerrar Sesión</a></li>
+            <?php else: ?>
+                <a href="login.php" class="login-link">Iniciar Sesión</a>
+            <?php endif; ?>
+        </div>
+    </nav>
+
+    <!-- Side Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-content">
+            <div class="menu-header">
+                <h3>Recetario</h3>
+                <button class="close-menu" id="closeMenu">×</button>
+            </div>
+            
+            <?php if ($isAuthenticated): ?>
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <strong><?php echo htmlspecialchars($currentUser['nombre'] ?: $currentUser['username']); ?></strong>
+                        <small>Administrador</small>
+                    </div>
+                </div>
+            <?php endif; ?>
+            
+            <ul>
+                <li><a href="index.php">Inicio</a></li>
+                
+                <?php if ($isAuthenticated): ?>
+                    <li class="menu-divider">Administración</li>
+                    <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
+                    <li><a href="categorias.php">Gestionar Categorías</a></li>
+                <?php endif; ?>
+                
+                <li class="menu-divider">Navegación</li>
+                <li><a href="recetas.php">Recetas</a></li>
+                
+                <?php if ($isAuthenticated): ?>
+                    <li class="menu-divider"></li>
+                    <li><a href="logout.php">Cerrar Sesión</a></li>
+                <?php else: ?>
+                    <li class="menu-divider"></li>
+                    <li><a href="login.php">Iniciar Sesión</a></li>
+                <?php endif; ?>
+            </ul>
+        </div>
     </div>
-</div>
 
     <?php if ($mensaje): ?>
         <div class="mensaje-container">
@@ -266,17 +372,24 @@ function imagenExiste($path) {
 
     <main>
         <div class="container">
-            <!-- Botón para crear receta y categoria -->
-            <div class="agregar-receta-container">
-                <a href="backend/agregar_receta.php" class="btn-agregar-receta">Agregar Receta</a>
-                <a href="categorias.php" class="btn-agregar-receta">Agregar Categoria</a>
-            </div>
+            <!-- Botones para crear receta y categoria (solo para usuarios autenticados) -->
+            <?php if ($isAuthenticated): ?>
+                <div class="agregar-receta-container">
+                    <a href="backend/agregar_receta.php" class="btn-agregar-receta">Agregar Receta</a>
+                    <a href="categorias.php" class="btn-agregar-receta">Agregar Categoria</a>
+                </div>
+            <?php endif; ?>
   
             <?php if ($mostrarCategorias): ?>
                 <!-- Mostrar Categorías -->
                 <?php if (empty($categorias)): ?>
                     <div class="categorias-vacio">
-                        <p>Aún no hay categorías disponibles. Puedes agregar una nueva categoría en la página de Categorías.</p>
+                        <p>Aún no hay categorías disponibles. <?php echo $isAuthenticated ? 'Puedes agregar una nueva categoría en la página de Categorías.' : 'Inicia sesión para agregar categorías.'; ?></p>
+                        <?php if ($isAuthenticated): ?>
+                            <a href="categorias.php" class="btn-agregar-receta">Ir a Categorías</a>
+                        <?php else: ?>
+                            <a href="login.php" class="btn-agregar-receta">Iniciar Sesión</a>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="categorias-grid">
@@ -288,22 +401,18 @@ function imagenExiste($path) {
                             
                             try {
                                 $stmt = $pdo->prepare("
-                                    SELECT image_path, image_path
+                                    SELECT image_path
                                     FROM recetas
                                     WHERE categoria_id = :categoria_id
-                                    AND (image_path IS NOT NULL OR image_path IS NOT NULL)
+                                    AND image_path IS NOT NULL
                                     ORDER BY id DESC
                                     LIMIT 1
                                 ");
                                 $stmt->execute([':categoria_id' => $categoria['id']]);
                                 $imagenReceta = $stmt->fetch(PDO::FETCH_ASSOC);
                                 
-                                if ($imagenReceta) {
-                                    if (!empty($imagenReceta['image_path']) && imagenExiste($imagenReceta['image_path'])) {
-                                        $imagenUrl = $imagenReceta['image_path'];
-                                    } elseif (!empty($imagenReceta['image_url']) && imagenExiste($imagenReceta['image_url'])) {
-                                        $imagenUrl = $imagenReceta['image_url'];
-                                    }
+                                if ($imagenReceta && !empty($imagenReceta['image_path']) && imagenExiste($imagenReceta['image_path'])) {
+                                    $imagenUrl = $imagenReceta['image_path'];
                                 }
                             } catch (PDOException $e) {
                                 // Error silencioso
@@ -349,6 +458,11 @@ function imagenExiste($path) {
                                 Aún no hay recetas en el recetario.
                             <?php endif; ?>
                         </p>
+                        <?php if ($isAuthenticated): ?>
+                            <a href="backend/agregar_receta.php" class="btn-agregar-receta">Agregar Primera Receta</a>
+                        <?php else: ?>
+                            <a href="login.php" class="btn-agregar-receta">Iniciar Sesión para Agregar Recetas</a>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
@@ -361,7 +475,7 @@ function imagenExiste($path) {
                                                 alt="<?php echo htmlspecialchars($receta['title']); ?>"
                                                 style="width: 100%; height: 100%; object-fit: cover;">
                                         <?php elseif (!empty($receta['image_url'])): ?>
-                                            <img src="<?php echo htmlspecialchars($receta['image_path']); ?>"
+                                            <img src="<?php echo htmlspecialchars($receta['image_url']); ?>"
                                                 alt="<?php echo htmlspecialchars($receta['title']); ?>"
                                                 style="width: 100%; height: 100%; object-fit: cover;">
                                         <?php else: ?>
@@ -398,13 +512,50 @@ function imagenExiste($path) {
                     <ul>
                         <li><a href="index.php">Inicio</a></li>
                         <li><a href="recetas.php">Recetas</a></li>
-                        <li><a href="categorias.php">Categorias</a></li>
+                        <?php if ($isAuthenticated): ?>
+                            <li><a href="categorias.php">Categorías</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
             </div>
         </div>
     </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Asegurar que el navbar esté fijo
+            const nav = document.querySelector('nav');
+            nav.style.position = 'fixed';
+            nav.style.top = '0';
+            nav.style.left = '0';
+            nav.style.width = '100%';
+            nav.style.zIndex = '1000';
+
+            // Ajustar padding del body
+            document.body.style.paddingTop = '60px';
+
+            // Ocultar mensaje después de 5 segundos
+            const mensajeContainer = document.querySelector('.mensaje-container');
+            if (mensajeContainer) {
+                setTimeout(function () {
+                    mensajeContainer.style.opacity = '0';
+                    setTimeout(function () {
+                        mensajeContainer.style.display = 'none';
+                    }, 1000);
+                }, 5000);
+            }
+
+            // Handle logout confirmation
+            const logoutLink = document.querySelector('a[href="logout.php"]');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    if (!confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                        e.preventDefault();
+                    }
+                });
+            }
+        });
+    </script>
     <script src="js/menu.js"></script>
 </body>
 

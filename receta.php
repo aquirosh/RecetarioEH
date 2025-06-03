@@ -2,6 +2,13 @@
 require_once 'backend/db.php'; // Ruta unificada para la conexión
 session_start(); // Añadimos soporte para sesiones
 
+// Verificar si el usuario está autenticado
+$isAuthenticated = isset($_SESSION['user_id']);
+$currentUser = $isAuthenticated ? [
+    'username' => $_SESSION['username'] ?? '',
+    'nombre' => $_SESSION['nombre'] ?? ''
+] : null;
+
 // Inicializar variables
 $receta = null;
 $error = null;
@@ -103,39 +110,144 @@ function formatearTiempo($minutos) {
 
     <link rel="stylesheet" href="css/receta.css">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/search.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos adicionales para el navbar con autenticación */
+        .user-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+        }
+
+        .user-welcome {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .login-link {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .login-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .user-avatar {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .user-details strong {
+            display: block;
+            color: white;
+            font-size: 16px;
+        }
+
+        .user-details small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .menu-divider {
+            padding: 8px 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .user-welcome, .login-link {
+                font-size: 12px;
+            }
+            
+            .user-container {
+                padding-right: 5px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav>
-    <div class="menu-container">
-        <button class="menu-button" id="openMenu">☰</button>
-    </div>
-    <div class="brand-container">
-        <a href="index.php" class="nav-brand">Recetario</a>
-    </div>
-    <div class="placeholder-container">
-        <!-- Empty container to balance the grid layout -->
-    </div>
-</nav>
-
-<!-- Side Menu -->
-<div class="menu-overlay" id="menuOverlay"></div>
-<div class="side-menu" id="sideMenu">
-    <div class="side-menu-content">
-        <div class="menu-header">
-            <h3>Recetario</h3>
-            <button class="close-menu" id="closeMenu">×</button>
+        <div class="menu-container">
+            <button class="menu-button" id="openMenu">☰</button>
         </div>
-        <ul>
-            <li><a href="index.php">Inicio</a></li>
-            <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
-            <li><a href="recetas.php">Recetas</a></li>
-            <li><a href="categorias.php">Agregar Categorias</a></li>
-        </ul>
+        <div class="brand-container">
+            <a href="index.php" class="nav-brand">Recetario</a>
+        </div>
+        <div class="user-container">
+            <?php if ($isAuthenticated): ?>
+                <a href="logout.php" class="login-link">Cerrar Sesión</a></li>
+            <?php else: ?>
+                <a href="login.php" class="login-link">Iniciar Sesión</a>
+            <?php endif; ?>
+        </div>
+    </nav>
+
+    <!-- Side Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-content">
+            <div class="menu-header">
+                <h3>Recetario</h3>
+                <button class="close-menu" id="closeMenu">×</button>
+            </div>
+            
+            <?php if ($isAuthenticated): ?>
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <strong><?php echo htmlspecialchars($currentUser['nombre'] ?: $currentUser['username']); ?></strong>
+                        <small>Administrador</small>
+                    </div>
+                </div>
+            <?php endif; ?>
+            
+            <ul>
+                <li><a href="index.php">Inicio</a></li>
+                
+                <?php if ($isAuthenticated): ?>
+                    <li class="menu-divider">Administración</li>
+                    <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
+                    <li><a href="categorias.php">Gestionar Categorías</a></li>
+                <?php endif; ?>
+                
+                <li class="menu-divider">Navegación</li>
+                <li><a href="recetas.php">Recetas</a></li>
+                
+                <?php if ($isAuthenticated): ?>
+                    <li class="menu-divider"></li>
+                    <li><a href="logout.php">Cerrar Sesión</a></li>
+                <?php else: ?>
+                    <li class="menu-divider"></li>
+                    <li><a href="login.php">Iniciar Sesión</a></li>
+                <?php endif; ?>
+            </ul>
+        </div>
     </div>
-</div>
     
     <?php if ($mensaje): ?>
     <div class="mensaje-container">
@@ -160,23 +272,25 @@ function formatearTiempo($minutos) {
                             <h1><?php echo htmlspecialchars($receta['title']); ?></h1>
                             <span class="categoria-badge"><?php echo htmlspecialchars($receta['category']); ?></span>
                         </div>
-                        <div class="receta-acciones">
-                            <a href="backend/editar_receta.php?id=<?php echo $receta['id']; ?>" class="btn btn-secondary">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                                </svg>
-                                Editar
-                            </a>
-                            <button class="btn btn-danger" onclick="confirmarEliminar(<?php echo $receta['id']; ?>)">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                                </svg>
-                                Eliminar
-                            </button>
-                        </div>
+                        <?php if ($isAuthenticated): ?>
+                            <div class="receta-acciones">
+                                <a href="backend/editar_receta.php?id=<?php echo $receta['id']; ?>" class="btn btn-secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                    </svg>
+                                    Editar
+                                </a>
+                                <button class="btn btn-danger" onclick="confirmarEliminar(<?php echo $receta['id']; ?>)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                                    </svg>
+                                    Eliminar
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="receta-layout">
@@ -301,7 +415,9 @@ function formatearTiempo($minutos) {
                     <ul>
                         <li><a href="index.php">Inicio</a></li>
                         <li><a href="recetas.php">Recetas</a></li>
-                        <li><a href="categorias.php">Categorias</a></li>
+                        <?php if ($isAuthenticated): ?>
+                            <li><a href="categorias.php">Categorías</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
             </div>
@@ -309,12 +425,14 @@ function formatearTiempo($minutos) {
     </footer>
 
     <script>
-        // Función para confirmar eliminación
+        // Función para confirmar eliminación (solo para usuarios autenticados)
+        <?php if ($isAuthenticated): ?>
         function confirmarEliminar(id) {
             if (confirm('¿Estás seguro de que deseas eliminar esta receta? Esta acción no se puede deshacer.')) {
                 window.location.href = 'backend/eliminar_receta.php?id=' + id;
             }
         }
+        <?php endif; ?>
 
         // Manejo del menú responsivo
         document.addEventListener('DOMContentLoaded', function() {
@@ -324,6 +442,16 @@ function formatearTiempo($minutos) {
             menuButton.addEventListener('click', function() {
                 navUl.classList.toggle('show');
             });
+
+            // Handle logout confirmation
+            const logoutLink = document.querySelector('a[href="logout.php"]');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    if (!confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                        e.preventDefault();
+                    }
+                });
+            }
         });
     </script>
     <script src="js/menu.js"></script>

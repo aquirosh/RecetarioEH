@@ -34,6 +34,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set active menu item based on current page
     setActiveMenuItem();
+    
+    // Handle logout confirmation
+    const logoutLink = document.querySelector('a[href="logout.php"]');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', function(e) {
+            if (!confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                e.preventDefault();
+            }
+        });
+    }
 });
 
 /**

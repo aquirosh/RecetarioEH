@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php'; // Conexión a la base de datos
+require_once 'protected.php'; 
 session_start(); // Iniciamos sesión para poder guardar mensajes
 
 // Verificar si se recibió un ID válido

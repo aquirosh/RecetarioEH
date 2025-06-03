@@ -2,6 +2,29 @@
 require_once 'db.php'; // Ruta unificada para la conexión
 session_start(); // Añadimos soporte para sesiones
 
+// Verificar autenticación - esta página requiere autenticación
+$isAuthenticated = false;
+$currentUser = null;
+
+try {
+    require_once 'protected.php'; // Protección de autenticación
+    $isAuthenticated = true;
+    
+    // Obtener información del usuario desde la sesión
+    if (isset($_SESSION['user_id'])) {
+        $currentUser = [
+            'id' => $_SESSION['user_id'],
+            'username' => $_SESSION['username'] ?? '',
+            'nombre' => $_SESSION['nombre'] ?? '',
+            'email' => $_SESSION['email'] ?? ''
+        ];
+    }
+} catch (Exception $e) {
+    // Si hay error con protected.php, redirigir al login
+    header("Location: ../login.php");
+    exit;
+}
+
 // Función para validar datos
 function validarDatos($datos)
 {
@@ -10,7 +33,7 @@ function validarDatos($datos)
     // Validación de campos requeridos - MODIFICADO: Se quitó cook_time de los campos requeridos
     $camposRequeridos = ['title', 'category', 'prep_time', 'ingredients', 'preparation_steps'];
     foreach ($camposRequeridos as $campo) {
-        if (empty(trim($datos[$campo]))) {
+        if (empty(trim($datos[$campo] ?? ''))) {
             $errores[] = "El campo " . ucfirst(str_replace('_', ' ', $campo)) . " es obligatorio.";
         }
     }
@@ -21,7 +44,7 @@ function validarDatos($datos)
     }
 
     // MODIFICADO: Permitir 0 para tiempo de cocción
-    if ($datos['cook_time'] === '') {
+    if (!isset($datos['cook_time']) || $datos['cook_time'] === '') {
         // Si está vacío, establecerlo como 0
         $datos['cook_time'] = 0;
     } else if (!is_numeric($datos['cook_time']) || $datos['cook_time'] < 0) {
@@ -34,12 +57,12 @@ function validarDatos($datos)
 // Función para subir imagen
 function subirImagen($file) {
     // Verificar si se subió un archivo
-    if ($file['error'] == UPLOAD_ERR_NO_FILE) {
+    if (!isset($file) || !is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) == UPLOAD_ERR_NO_FILE) {
         return ['success' => false, 'error' => null, 'filename' => null];
     }
     
     // Verificar errores de carga
-    if ($file['error'] !== UPLOAD_ERR_OK) {
+    if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
         $errores = [
             UPLOAD_ERR_INI_SIZE => "El archivo excede el tamaño máximo permitido por el servidor.",
             UPLOAD_ERR_FORM_SIZE => "El archivo excede el tamaño máximo permitido por el formulario.",
@@ -54,13 +77,13 @@ function subirImagen($file) {
     
     // Validar tipo de archivo
     $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!in_array($file['type'], $allowedTypes)) {
+    if (!in_array($file['type'] ?? '', $allowedTypes)) {
         return ['success' => false, 'error' => "Tipo de archivo no permitido. Sólo se aceptan imágenes JPG, PNG, GIF y WEBP.", 'filename' => null];
     }
     
     // Validar tamaño (max 5MB)
     $maxSize = 5 * 1024 * 1024; // 5MB en bytes
-    if ($file['size'] > $maxSize) {
+    if (($file['size'] ?? 0) > $maxSize) {
         return ['success' => false, 'error' => "La imagen excede el tamaño máximo permitido (5MB).", 'filename' => null];
     }
     
@@ -73,12 +96,12 @@ function subirImagen($file) {
     }
     
     // Generar nombre único para el archivo
-    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $extension = pathinfo($file['name'] ?? '', PATHINFO_EXTENSION);
     $filename = uniqid('receta_') . '.' . $extension;
     $targetFile = $uploadDir . $filename;
     
     // Intentar mover el archivo
-    if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+    if (move_uploaded_file($file['tmp_name'] ?? '', $targetFile)) {
         return ['success' => true, 'error' => null, 'filename' => 'uploads/recetas/' . $filename];
     } else {
         return ['success' => false, 'error' => "Error al guardar la imagen en el servidor.", 'filename' => null];
@@ -109,12 +132,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
+    // Asegurar que cook_time tenga un valor válido
+    if ($datosFormulario['cook_time'] === '') {
+        $datosFormulario['cook_time'] = 0;
+    }
+
     // Obtener categoria_id
     $categoria_id = isset($_POST['categoria_id']) ? (int)$_POST['categoria_id'] : null;
 
     // Si es una categoría nueva, insertarla primero y obtener su ID
     if ($datosFormulario['category'] === 'nueva' && !empty($_POST['nuevaCategoria'])) {
-        $nuevaCategoria = trim(htmlspecialchars($_POST['nuevaCategoria']));
+        $nuevaCategoria = trim(htmlspecialchars($_POST['nuevaCategoria'] ?? ''));
         if (!empty($nuevaCategoria)) {
             try {
                 // Verificar si la categoría ya existe
@@ -161,7 +189,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $errores = array_merge($errores, validarDatos($datosFormulario));
 
     // Procesar imagen si se subió
-    $imagenResultado = subirImagen($_FILES['imagen']);
+    $imagenResultado = subirImagen($_FILES['imagen'] ?? null);
     if (!$imagenResultado['success'] && $imagenResultado['error'] !== null) {
         $errores[] = $imagenResultado['error'];
     } else if ($imagenResultado['success']) {
@@ -224,16 +252,64 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar Receta | Eugenie Herrero</title>
+    <title>Agregar Receta | Recetario</title>
 
     <link rel="icon" href="../img/recetario.png" type="image/png">
-    <link rel="shortcut icon" href="../img/recetario.png" type="../image/png">
-
-    
+    <link rel="shortcut icon" href="../img/recetario.png" type="image/png">
 
     <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/search.css">
+    <link rel="stylesheet" href="../css/categorias.css">
+    
     <style>
+        /* Estilos adicionales para el navbar con autenticación */
+        .user-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+        }
+
+        .user-welcome {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .user-avatar {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .user-details strong {
+            display: block;
+            color: white;
+            font-size: 16px;
+        }
+
+        .user-details small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .menu-divider {
+            padding: 8px 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+
         /* Estilos para el navbar fijo */
         nav {
             position: fixed !important;
@@ -308,39 +384,78 @@ try {
             background-color: var(--primary);
             transform: translateY(-2px);
         }
+
+        @media (max-width: 768px) {
+            .user-welcome {
+                font-size: 12px;
+            }
+            
+            .user-container {
+                padding-right: 5px;
+            }
+        }
     </style>
 </head>
 
 <body>
     <!-- Navigation -->
     <nav>
-    <div class="menu-container">
-        <button class="menu-button" id="openMenu">☰</button>
-    </div>
-    <div class="brand-container">
-        <a href="../index.php" class="nav-brand">Recetario</a>
-    </div>
-    <div class="placeholder-container">
-        <!-- Empty container to balance the grid layout -->
-    </div>
-</nav>
-
-<!-- Side Menu -->
-<div class="menu-overlay" id="menuOverlay"></div>
-<div class="side-menu" id="sideMenu">
-    <div class="side-menu-content">
-        <div class="menu-header">
-            <h3>Recetario</h3>
-            <button class="close-menu" id="closeMenu">×</button>
+        <div class="menu-container">
+            <button class="menu-button" id="openMenu">☰</button>
         </div>
-        <ul>
-            <li><a href="../index.php">Inicio</a></li>
-            <li><a href="agregar_receta.php">Agregar Recetas</a></li>
-            <li><a href="../recetas.php">Recetas</a></li>
-            <li><a href="../categorias.php">Agregar Categorias</a></li>
-        </ul>
+        <div class="brand-container">
+            <a href="../index.php" class="nav-brand">Recetario</a>
+        </div>
+        <div class="user-container">
+            <?php if ($isAuthenticated): ?>
+                <a href="../logout.php" class="login-link">Cerrar Sesión</a></li>
+            <?php else: ?>
+                <a href="login.php" class="login-link">Iniciar Sesión</a>
+            <?php endif; ?>
+        </div>
+    </nav>
+
+    <!-- Side Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-content">
+            <div class="menu-header">
+                <h3>Recetario</h3>
+                <button class="close-menu" id="closeMenu">×</button>
+            </div>
+            
+            <?php if ($isAuthenticated): ?>
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <strong><?php echo htmlspecialchars($currentUser['nombre'] ?: $currentUser['username']); ?></strong>
+                        <small>Administrador</small>
+                    </div>
+                </div>
+            <?php endif; ?>
+            
+            <ul>
+                <li><a href="../index.php">Inicio</a></li>
+                
+                <?php if ($isAuthenticated): ?>
+                    <li class="menu-divider">Administración</li>
+                    <li><a href="agregar_receta.php">Agregar Recetas</a></li>
+                    <li><a href="../categorias.php">Gestionar Categorías</a></li>
+                <?php endif; ?>
+                
+                <li class="menu-divider">Navegación</li>
+                <li><a href="../recetas.php">Recetas</a></li>
+                
+                <?php if ($isAuthenticated): ?>
+                    <li class="menu-divider"></li>
+                    
+                <?php else: ?>
+                    <li class="menu-divider"></li>
+                    <li><a href="../login.php">Iniciar Sesión</a></li>
+                <?php endif; ?>
+            </ul>
+        </div>
     </div>
-</div>
 
     <header>
         <div class="container">
@@ -362,7 +477,7 @@ try {
                     <div class="message error-message">
                         <ul>
                             <?php foreach ($errores as $error): ?>
-                                <li><?php echo $error; ?></li>
+                                <li><?php echo htmlspecialchars($error); ?></li>
                             <?php endforeach; ?>
                         </ul>
                     </div>
@@ -378,7 +493,7 @@ try {
                     <div class="form-group">
                         <label for="title">Título de la Receta *</label>
                         <input type="text" id="title" name="title" class="form-control"
-                            value="<?php echo $datosFormulario['title']; ?>" required>
+                            value="<?php echo htmlspecialchars($datosFormulario['title']); ?>" required>
                     </div>
 
                     <div class="form-group">
@@ -389,7 +504,7 @@ try {
                                 <?php foreach ($categorias as $categoria): ?>
                                     <option value="<?php echo htmlspecialchars($categoria['nombre']); ?>" 
                                         <?php echo ($datosFormulario['category'] === $categoria['nombre']) ? 'selected' : ''; ?>
-                                        data-id="<?php echo $categoria['id']; ?>">
+                                        data-id="<?php echo (int)$categoria['id']; ?>">
                                         <?php echo htmlspecialchars($categoria['nombre']); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -408,27 +523,27 @@ try {
                     <div class="form-group">
                         <label for="portions">Porciones</label>
                         <input type="text" id="portions" name="portions" class="form-control"
-                            value="<?php echo $datosFormulario['portions']; ?>" placeholder="Ej: 4 personas">
+                            value="<?php echo htmlspecialchars($datosFormulario['portions']); ?>" placeholder="Ej: 4 personas">
                         <p class="help-text">Indica para cuántas personas está pensada esta receta</p>
                     </div>
 
                     <div class="form-group">
                         <label for="prep_time">Tiempo de preparación (minutos) *</label>
                         <input type="number" id="prep_time" name="prep_time" class="form-control"
-                            value="<?php echo $datosFormulario['prep_time']; ?>" min="0" required>
+                            value="<?php echo htmlspecialchars($datosFormulario['prep_time']); ?>" min="0" required>
                     </div>
 
                     <div class="form-group">
                         <label for="cook_time">Tiempo de cocción (minutos)</label>
                         <input type="number" id="cook_time" name="cook_time" class="form-control"
-                            value="<?php echo $datosFormulario['cook_time']; ?>" min="0">
+                            value="<?php echo htmlspecialchars($datosFormulario['cook_time']); ?>" min="0">
                         <p class="help-text">Usar 0 para recetas sin cocción (como ensaladas)</p>
                     </div>
 
                     <div class="form-group">
                         <label for="ingredients">Ingredientes *</label>
                         <textarea id="ingredients" name="ingredients" class="form-control"
-                            required><?php echo $datosFormulario['ingredients']; ?></textarea>
+                            required><?php echo htmlspecialchars($datosFormulario['ingredients']); ?></textarea>
                     </div>
 
                     <div class="form-group">
@@ -446,7 +561,7 @@ try {
                             </h4>
                         </div>
                         <textarea id="preparation_steps" name="preparation_steps" class="form-control"
-                            required><?php echo $datosFormulario['preparation_steps']; ?></textarea>
+                            required><?php echo htmlspecialchars($datosFormulario['preparation_steps']); ?></textarea>
                     </div>
 
                     <div class="form-group">
@@ -475,14 +590,14 @@ try {
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <a href="../index.php">Recetario QH</a>
+                    <a href="../index.php">Recetario</a>
                     <p>Cocina casera para todos los días</p>
                 </div>
                 
                 <div class="footer-links">
                     <h3>Navegación</h3>
                     <ul>
-                        <li><a href="../index.php">Home</a></li>
+                        <li><a href="../index.php">Inicio</a></li>
                         <li><a href="../recetas.php">Recetas</a></li>
                         <li><a href="../categorias.php">Categorías</a></li>
                     </ul>
@@ -490,7 +605,7 @@ try {
             </div>
             
             <div class="copyright">
-                <p>&copy; <?php echo date("Y"); ?> Recetario QH. Todos los derechos reservados.</p>
+                <p>&copy; <?php echo date("Y"); ?> Recetario - Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>
@@ -499,72 +614,116 @@ try {
         document.addEventListener('DOMContentLoaded', function() {
             // Asegurar que el navbar esté fijo
             const nav = document.querySelector('nav');
-            nav.style.position = 'fixed';
-            nav.style.top = '0';
-            nav.style.left = '0';
-            nav.style.width = '100%';
-            nav.style.zIndex = '1000';
-            
-            // Ajustar padding del body
-            document.body.style.paddingTop = '60px';
+            if (nav) {
+                nav.style.position = 'fixed';
+                nav.style.top = '0';
+                nav.style.left = '0';
+                nav.style.width = '100%';
+                nav.style.zIndex = '1000';
+                
+                // Ajustar padding del body
+                document.body.style.paddingTop = '60px';
+            }
+
+            // Handle logout confirmation
+            const logoutLink = document.querySelector('a[href="../logout.php"]');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    if (!confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                        e.preventDefault();
+                    }
+                });
+            }
         });
         
         // Manejar el campo id de la categoría
-        document.getElementById('category').addEventListener('change', function () {
-            var nuevaCategoriaContainer = document.getElementById('nuevaCategoriaContainer');
-            var categoriaId = this.options[this.selectedIndex].getAttribute('data-id');
-            document.getElementById('categoria_id').value = categoriaId || '';
-            
-            if (this.value === 'nueva') {
-                nuevaCategoriaContainer.style.display = 'flex';
-                document.getElementById('nuevaCategoria').focus();
-            } else {
-                nuevaCategoriaContainer.style.display = 'none';
-            }
-        });
+        const categorySelect = document.getElementById('category');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function () {
+                var nuevaCategoriaContainer = document.getElementById('nuevaCategoriaContainer');
+                var categoriaId = this.options[this.selectedIndex].getAttribute('data-id');
+                var categoriaIdInput = document.getElementById('categoria_id');
+                
+                if (categoriaIdInput) {
+                    categoriaIdInput.value = categoriaId || '';
+                }
+                
+                if (nuevaCategoriaContainer) {
+                    if (this.value === 'nueva') {
+                        nuevaCategoriaContainer.style.display = 'flex';
+                        var nuevaCategoriaInput = document.getElementById('nuevaCategoria');
+                        if (nuevaCategoriaInput) {
+                            nuevaCategoriaInput.focus();
+                        }
+                    } else {
+                        nuevaCategoriaContainer.style.display = 'none';
+                    }
+                }
+            });
+        }
 
         // Asignar nueva categoría al seleccionar
-        document.getElementById('btnAgregarCategoria').addEventListener('click', function () {
-            var nuevaCategoria = document.getElementById('nuevaCategoria').value.trim();
-            if (nuevaCategoria) {
+        const btnAgregarCategoria = document.getElementById('btnAgregarCategoria');
+        if (btnAgregarCategoria) {
+            btnAgregarCategoria.addEventListener('click', function () {
+                var nuevaCategoriaInput = document.getElementById('nuevaCategoria');
                 var categorySelect = document.getElementById('category');
-                var nuevaOption = document.createElement('option');
-                nuevaOption.value = nuevaCategoria;
-                nuevaOption.text = nuevaCategoria;
-                nuevaOption.selected = true;
-                categorySelect.add(nuevaOption, categorySelect.length - 1);
-                document.getElementById('nuevaCategoriaContainer').style.display = 'none';
-            }
-        });
+                var nuevaCategoriaContainer = document.getElementById('nuevaCategoriaContainer');
+                
+                if (nuevaCategoriaInput && categorySelect) {
+                    var nuevaCategoria = nuevaCategoriaInput.value.trim();
+                    if (nuevaCategoria) {
+                        var nuevaOption = document.createElement('option');
+                        nuevaOption.value = nuevaCategoria;
+                        nuevaOption.text = nuevaCategoria;
+                        nuevaOption.selected = true;
+                        categorySelect.add(nuevaOption, categorySelect.length - 1);
+                        
+                        if (nuevaCategoriaContainer) {
+                            nuevaCategoriaContainer.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        }
 
         // Mostrar vista previa de la imagen
-        document.getElementById('imagen').addEventListener('change', function() {
-            const file = this.files[0];
-            const fileName = document.getElementById('fileName');
-            const imagePreview = document.getElementById('imagePreview');
-            
-            if (file) {
-                fileName.textContent = file.name;
+        const imagenInput = document.getElementById('imagen');
+        if (imagenInput) {
+            imagenInput.addEventListener('change', function() {
+                const file = this.files[0];
+                const fileName = document.getElementById('fileName');
+                const imagePreview = document.getElementById('imagePreview');
                 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
+                if (file && fileName && imagePreview) {
+                    fileName.textContent = file.name;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else if (fileName && imagePreview) {
+                    fileName.textContent = 'No se ha seleccionado archivo';
+                    imagePreview.style.display = 'none';
                 }
-                reader.readAsDataURL(file);
-            } else {
-                fileName.textContent = 'No se ha seleccionado archivo';
-                imagePreview.style.display = 'none';
-            }
-        });
+            });
+        }
         
         // Permitir usar Enter para agregar nueva categoría
-        document.getElementById('nuevaCategoria').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                document.getElementById('btnAgregarCategoria').click();
-            }
-        });
+        const nuevaCategoriaInput = document.getElementById('nuevaCategoria');
+        if (nuevaCategoriaInput) {
+            nuevaCategoriaInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var btnAgregarCategoria = document.getElementById('btnAgregarCategoria');
+                    if (btnAgregarCategoria) {
+                        btnAgregarCategoria.click();
+                    }
+                }
+            });
+        }
     </script>
     <script src="../js/menu.js"></script>
     <script src="../js/recipe-cards.js"></script>

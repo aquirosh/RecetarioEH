@@ -1,5 +1,13 @@
 <?php
 require_once 'backend/db.php'; // Conexión a la base de datos
+session_start(); // Iniciar sesión para verificar autenticación
+
+// Verificar si el usuario está autenticado
+$isAuthenticated = isset($_SESSION['user_id']);
+$currentUser = $isAuthenticated ? [
+    'username' => $_SESSION['username'] ?? '',
+    'nombre' => $_SESSION['nombre'] ?? ''
+] : null;
 
 // Función para formatear el tiempo total
 function formatearTiempo($minutos) {
@@ -56,47 +64,168 @@ try {
     <link rel="icon" href="img/recetario.png" type="image/png">
     <link rel="shortcut icon" href="img/recetario.png" type="image/png">
 
-
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/categorias.css">
+    
+    <style>
+        /* Estilos adicionales para el navbar con autenticación */
+        .user-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+        }
+
+        .user-welcome {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .login-link {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .login-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .user-avatar {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .user-details strong {
+            display: block;
+            color: white;
+            font-size: 16px;
+        }
+
+        .user-details small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .menu-divider {
+            padding: 8px 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+
+        .side-menu ul li:not(.menu-divider) a {
+            display: block;
+        }
+
+        /* Estilo condicional para mostrar/ocultar botones de administración */
+        .admin-section {
+            display: <?php echo $isAuthenticated ? 'block' : 'none'; ?>;
+        }
+
+        @media (max-width: 768px) {
+            .user-welcome, .login-link {
+                font-size: 12px;
+            }
+            
+            .user-container {
+                padding-right: 5px;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <!-- Navigation -->
-<nav>
-    <div class="menu-container">
-        <button class="menu-button" id="openMenu">☰</button>
-    </div>
-    <div class="brand-container">
-        <a href="index.php" class="nav-brand">Recetario</a>
-    </div>
-    <div class="placeholder-container">
-        <!-- Empty container to balance the grid layout -->
-    </div>
-</nav>
-
-<!-- Side Menu -->
-<div class="menu-overlay" id="menuOverlay"></div>
-<div class="side-menu" id="sideMenu">
-    <div class="side-menu-content">
-        <div class="menu-header">
-            <h3>Recetario</h3>
-            <button class="close-menu" id="closeMenu">×</button>
+    <nav>
+        <div class="menu-container">
+            <button class="menu-button" id="openMenu">☰</button>
         </div>
-        <ul>
-            <li><a href="index.php">Inicio</a></li>
-            <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
-            <li><a href="recetas.php">Recetas</a></li>
-            <li><a href="categorias.php">Agregar Categorias</a></li>
-        </ul>
+        <div class="brand-container">
+            <a href="index.php" class="nav-brand">Recetario</a>
+        </div>
+        <div class="user-container">
+            <?php if ($isAuthenticated): ?>
+                <a href="logout.php" class="login-link">Cerrar Sesión</a></li>
+            <?php else: ?>
+                <a href="login.php" class="login-link">Iniciar Sesión</a>
+            <?php endif; ?>
+        </div>
+    </nav>
+
+    <!-- Side Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-content">
+            <div class="menu-header">
+                <h3>Recetario</h3>
+                <button class="close-menu" id="closeMenu">×</button>
+            </div>
+            
+            <?php if ($isAuthenticated): ?>
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <strong><?php echo htmlspecialchars($currentUser['nombre'] ?: $currentUser['username']); ?></strong>
+                        <small>Administrador</small>
+                    </div>
+                </div>
+            <?php endif; ?>
+            
+            <ul>
+                <li><a href="index.php">Inicio</a></li>
+                
+                <?php if ($isAuthenticated): ?>
+                    <li class="menu-divider">Administración</li>
+                    <li><a href="backend/agregar_receta.php">Agregar Recetas</a></li>
+                    <li><a href="categorias.php">Gestionar Categorías</a></li>
+                <?php endif; ?>
+                
+                <li class="menu-divider">Navegación</li>
+                <li><a href="recetas.php">Recetas</a></li>
+                
+                <?php if ($isAuthenticated): ?>
+                    <li class="menu-divider"></li>
+                    
+                <?php else: ?>
+                    <li class="menu-divider"></li>
+                    <li><a href="login.php">Iniciar Sesión</a></li>
+                <?php endif; ?>
+            </ul>
+        </div>
     </div>
-</div>
     
     <header>
         <div class="container">
             <div class="header-content">
                 <h1>Recetario</h1>
                 <h3>Las mejores recetas de Eugenie Herrero</h3>
+                
+                <?php if ($isAuthenticated): ?>
+                    <div class="admin-section" style="margin-top: 20px;">
+                        <a href="backend/agregar_receta.php" class="btn-agregar-receta" style="margin-right: 10px;">Agregar Receta</a>
+                        <a href="categorias.php" class="btn-agregar-receta">Gestionar Categorías</a>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </header>
@@ -108,8 +237,12 @@ try {
                 
                 <?php if (empty($recetasRecientes)): ?>
                     <div class="no-data-message">
-                        <p>Aún no hay recetas disponibles. ¡Añade tu primera receta!</p>
-                        <a href="backend/agregar_receta.php" class="btn-agregar-receta">Agregar Receta</a>
+                        <p>Aún no hay recetas disponibles. <?php echo $isAuthenticated ? '¡Añade tu primera receta!' : '¡Inicia sesión para agregar recetas!'; ?></p>
+                        <?php if ($isAuthenticated): ?>
+                            <a href="backend/agregar_receta.php" class="btn-agregar-receta">Agregar Receta</a>
+                        <?php else: ?>
+                            <a href="login.php" class="btn-agregar-receta">Iniciar Sesión</a>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="recipes-container">
@@ -194,8 +327,12 @@ try {
                 
                 <?php if (empty($categoriasPopulares)): ?>
                     <div class="no-data-message">
-                        <p>Aún no hay categorías disponibles. ¡Crea la primera categoría!</p>
-                        <a href="categorias.php" class="btn-agregar-receta">Ir a Categorías</a>
+                        <p>Aún no hay categorías disponibles. <?php echo $isAuthenticated ? '¡Crea la primera categoría!' : '¡Inicia sesión para crear categorías!'; ?></p>
+                        <?php if ($isAuthenticated): ?>
+                            <a href="categorias.php" class="btn-agregar-receta">Ir a Categorías</a>
+                        <?php else: ?>
+                            <a href="login.php" class="btn-agregar-receta">Iniciar Sesión</a>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="categories-container">
@@ -254,7 +391,9 @@ try {
                     <ul>
                         <li><a href="index.php">Inicio</a></li>
                         <li><a href="recetas.php">Recetas</a></li>
-                        <li><a href="categorias.php">Categorias</a></li>
+                        <?php if ($isAuthenticated): ?>
+                            <li><a href="categorias.php">Categorías</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
             </div>
@@ -263,6 +402,20 @@ try {
 
     <script src="js/menu.js"></script>
     <script src="js/recipe-cards.js"></script>
+
+    <script>
+        // Handle logout confirmation
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutLink = document.querySelector('a[href="logout.php"]');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    if (!confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                        e.preventDefault();
+                    }
+                });
+            }
+        });
+    </script>
 
 </body>
 
