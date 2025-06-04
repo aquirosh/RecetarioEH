@@ -356,7 +356,7 @@ function imagenExiste($path) {
                         <a href="recetas.php?ver_todas=true" class="btn-ver-todas">Ver todas las recetas</a>
                     </div>
                 <?php else: ?>
-                    <h1>Recetas</h1>
+                    <h1>Todas las Recetas</h1>
                     <?php if ($categoriaSeleccionada): ?>
                         <h3>Categoría: <?php echo $categoriaSeleccionada; ?> <a href="recetas.php"
                                 class="btn-quitar-filtro">(Ver todas las categorías)</a></h3>

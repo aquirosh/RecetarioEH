@@ -142,6 +142,84 @@ try {
             display: <?php echo $isAuthenticated ? 'block' : 'none'; ?>;
         }
 
+        /* ESTILOS MEJORADOS PARA CATEGORÍAS SIN OVERLAY DE COLOR */
+        .category-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 180px;
+            display: block;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .category-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .category-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .category-card:hover .category-image img {
+            transform: scale(1.1);
+        }
+
+        /* Overlay oscuro sutil para mejor legibilidad del texto */
+        .category-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7));
+            z-index: 1;
+        }
+
+        .category-card h3 {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 20px;
+            z-index: 2;
+            margin: 0;
+            transition: transform 0.3s ease;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .category-count {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(255,255,255,0.9);
+            color: #333;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 2;
+            backdrop-filter: blur(10px);
+        }
+
+        .category-card:hover h3 {
+            transform: translateY(-5px);
+        }
+
         @media (max-width: 768px) {
             .user-welcome, .login-link {
                 font-size: 12px;
@@ -337,11 +415,10 @@ try {
                 <?php else: ?>
                     <div class="categories-container">
                         <?php foreach ($categoriasPopulares as $categoria): ?>
-                            <a href="recetas.php?categoria=<?php echo urlencode($categoria['nombre']); ?>" class="categoria-card">
-                                <div class="categoria-color-overlay" style="background-color: <?php echo $categoria['color']; ?>;"></div>
+                            <a href="recetas.php?categoria=<?php echo urlencode($categoria['nombre']); ?>" class="category-card">
                                 
                                 <!-- Imagen para la categoría (intentamos encontrar una imagen de receta de esta categoría) -->
-                                <div class="categoria-image">
+                                <div class="category-image">
                                     <?php
                                     // Intentar encontrar una imagen para esta categoría
                                     try {
@@ -362,7 +439,7 @@ try {
                                     <?php endif; ?>
                                 </div>
                                 
-                                <span class="categoria-count">
+                                <span class="category-count">
                                     <?php echo $categoria['recetas_count']; ?> receta<?php echo ($categoria['recetas_count'] != 1) ? 's' : ''; ?>
                                 </span>
                                 <h3><?php echo htmlspecialchars($categoria['nombre']); ?></h3>
